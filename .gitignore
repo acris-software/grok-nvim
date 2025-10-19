@@ -56,3 +56,4 @@ secrets/
 dist/
 build/
 doc/tags
+*.xcf
