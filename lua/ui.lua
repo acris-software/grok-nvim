@@ -14,7 +14,6 @@ function M.open_chat_window(callback)
     style = "minimal",
     border = "rounded",
   })
-
   vim.api.nvim_buf_set_lines(
     buf,
     0,
@@ -26,12 +25,10 @@ function M.open_chat_window(callback)
   vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
   vim.api.nvim_buf_set_option(buf, "shiftwidth", 2)
   vim.api.nvim_win_set_option(win, "cursorline", true)
-
   -- Auto-enter insert mode at the bottom
   vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "" })
   vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
   vim.api.nvim_command("startinsert")
-
   vim.api.nvim_buf_set_keymap(buf, "i", "<CR>", "", {
     callback = function()
       local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
@@ -46,7 +43,6 @@ function M.open_chat_window(callback)
     end,
   })
   vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", "<cmd>close<CR>", { noremap = true, silent = true })
-
   M.current_buf = buf
   M.current_win = win
   return buf, win
