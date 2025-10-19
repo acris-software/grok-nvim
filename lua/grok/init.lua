@@ -1,3 +1,5 @@
+-- ~/github.com/acris-software/grok-nvim/lua/grok/init.lua
+
 local M = {}
 local commands = require("grok.commands")
 
@@ -33,6 +35,7 @@ function M.setup(opts)
     base_url = "https://api.x.ai/v1",
     temperature = 0.7,
     max_tokens = 256,
+    debug = false,
   }, opts or {})
 
   if not M.config.api_key then

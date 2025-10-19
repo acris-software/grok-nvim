@@ -1,5 +1,7 @@
--- lua/grok/util.lua
+-- ~/github.com/acris-software/grok-nvim/lua/grok/util.lua
+
 local M = {}
+
 function M.get_visual_selection()
   local s_start = vim.fn.getpos("'<")
   local s_end = vim.fn.getpos("'>")
@@ -16,4 +18,5 @@ function M.get_visual_selection()
   end
   return table.concat(lines, "\n")
 end
+
 return M

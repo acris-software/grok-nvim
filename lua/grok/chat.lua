@@ -1,9 +1,10 @@
--- ~/grok-nvim/lua/grok/chat.lua
+-- ~/github.com/acris-software/grok-nvim/lua/grok/chat.lua
 
 local M = {}
 local curl = require("plenary.curl")
 local async = require("plenary.async")
 local ui = require("grok.ui")
+local log = require("grok.log")
 
 function M.chat(prompt)
   local config = require("grok").config
@@ -20,7 +21,7 @@ function M.chat(prompt)
         max_tokens = config.max_tokens,
         stream = true,
       })
-      vim.notify("Request body: " .. body, vim.log.levels.DEBUG)
+      log.log("Request body: " .. body)
       local response = ""
       curl.post(config.base_url .. "/chat/completions", {
         headers = {
@@ -36,25 +37,23 @@ function M.chat(prompt)
             return
           end
           if data then
-            vim.notify("Stream data: " .. data, vim.log.levels.DEBUG)
-            if data:match("^data: ") then
-              local json_str = data:gsub("^data: ", "")
-              if json_str == "[DONE]" then
-                return
-              end -- End of stream
-              local ok, json = pcall(vim.json.decode, json_str)
-              if ok and json.choices and json.choices[1].delta and json.choices[1].delta.content then
-                response = response .. json.choices[1].delta.content
-                vim.schedule(function()
-                  ui.append_response(json.choices[1].delta.content)
-                end)
-              end
+            log.log("Stream data: " .. data)
+            local json_str = data:gsub("^data: ", "")
+            if json_str == "[DONE]" then
+              return
+            end
+            local ok, json = pcall(vim.json.decode, json_str)
+            if ok and json.choices and json.choices[1].delta and json.choices[1].delta.content then
+              response = response .. json.choices[1].delta.content
+              vim.schedule(function()
+                ui.append_response(json.choices[1].delta.content)
+              end)
             end
           end
         end,
         callback = function(res)
           vim.schedule(function()
-            vim.notify("Response status: " .. res.status, vim.log.levels.DEBUG)
+            log.log("Response status: " .. res.status)
             if res.status ~= 200 then
               ui.append_response("Error: " .. res.status .. " - " .. (res.body or "API issue"))
             end

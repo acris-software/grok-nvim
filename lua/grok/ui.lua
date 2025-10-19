@@ -1,3 +1,5 @@
+-- ~/github.com/acris-software/grok-nvim/lua/grok/ui.lua
+
 local M = {}
 local ns = vim.api.nvim_create_namespace("grok_chat")
 M.current_buf = nil
@@ -25,6 +27,10 @@ function M.open_chat_window(callback)
   vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
   vim.api.nvim_buf_set_option(buf, "shiftwidth", 2)
   vim.api.nvim_win_set_option(win, "cursorline", true)
+
+  -- Enable syntax highlighting via Treesitter if available
+  pcall(require("nvim-treesitter.highlight").attach, buf, "markdown")
+
   vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "" })
   vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
   vim.api.nvim_command("startinsert")

@@ -20,20 +20,30 @@ Obtain an xAI API key from x.ai/api. For free testing, use the Grok interface on
 Add to your Neovim plugin manager (e.g., in `lua/plugins.lua`):
 
 ```lua
-{
-  "nicholasjordan/grok.nvim",
-  dependencies = { "nvim-lua/plenary.nvim" },
-  config = function()
-    require("grok").setup({
-      api_key = vim.env.GROK_API_KEY,
-      model = "grok-beta",
-      base_url = "https://api.x.ai/v1",
-      temperature = 0.7,
-      max_tokens = 1024,
-    })
-  end,
-}
-```
+return {
+  {
+    "acris-software/grok-nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    branch = "dev",
+    config = function()
+      -- Debug: Verify runtimepath
+      local rtp = table.concat(vim.api.nvim_list_runtime_paths(), "\n")
+      vim.notify("Runtimepath:\n" .. rtp, vim.log.levels.INFO)
+      local ok, grok = pcall(require, "grok")
+      if not ok then
+        vim.notify("Failed to load grok module: " .. grok, vim.log.levels.ERROR)
+        return
+      end
+      grok.setup({
+        model = "grok-3-mini",
+        base_url = "https://api.x.ai/v1",
+        temperature = 0.7,
+        max_tokens = 256,
+        debug = false, -- Set to true for debug mode;
+      })
+    end,
+  },
+}```
 
 ## Usage
 
