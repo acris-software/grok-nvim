@@ -2,7 +2,16 @@
 
 ![grok-nvim](https://github.com/acris-software/grok-nvim/blob/dev/assets/images/grok-nvim.jpg)
 
-A Neovim plugin for integrating xAI's Grok AI, providing interactive chat, code explanations, and refactoring directly in your editor.
+## Project Overview
+grok-nvim is a Neovim plugin for interacting with xAI's Grok models via their API. It provides a floating chat window for queries, supports streaming responses, and aims for a plug-and-play experience. Users install via a plugin manager, set their API key, and customize via `require("grok").setup(opts)`.
+
+**Goals**:
+- **Clean**: Minimalist code (<500 LOC total), modular files.
+- **Simple**: Easy setup; intuitive commands/keymaps.
+- **Performant**: Async operations; lightweight (only plenary.nvim dep for curl/async).
+- **Plug-and-Play**: Override model/tokens/temperature in setup; no code changes needed.
+
+**Dependencies**: plenary.nvim (for curl, async).
 
 ## Features
 
