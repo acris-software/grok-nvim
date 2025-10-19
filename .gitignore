@@ -26,6 +26,11 @@ luac.out
 *.i*86
 *.x86_64
 *.hex
+*.key
+*.crt 
+*.cert
+*.pem
+test/
 
 # Neovim plugin development
 *.log

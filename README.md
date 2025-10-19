@@ -48,6 +48,7 @@ plenary.nvim
 xAI API key (free or paid tier, see x.ai/api)
 
 Project Structure
+```
 grok-nvim/
 ├── lua/
 │   ├── grok/
@@ -56,6 +57,7 @@ grok-nvim/
 ├── README.md
 ├── .gitignore
 ├── LICENSE
+```
 
 ## License
 MIT License

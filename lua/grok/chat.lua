@@ -1,3 +1,5 @@
+-- ~/grok-nvim/lua/grok/chat.lua
+
 local M = {}
 local curl = require("plenary.curl")
 local async = require("plenary.async")
@@ -35,12 +37,18 @@ function M.chat(prompt)
           end
           if data then
             vim.notify("Stream data: " .. data, vim.log.levels.DEBUG)
-            local ok, json = pcall(vim.json.decode, data)
-            if ok and json.choices and json.choices[1].delta and json.choices[1].delta.content then
-              response = response .. json.choices[1].delta.content
-              vim.schedule(function()
-                ui.append_response(json.choices[1].delta.content)
-              end)
+            if data:match("^data: ") then
+              local json_str = data:gsub("^data: ", "")
+              if json_str == "[DONE]" then
+                return
+              end -- End of stream
+              local ok, json = pcall(vim.json.decode, json_str)
+              if ok and json.choices and json.choices[1].delta and json.choices[1].delta.content then
+                response = response .. json.choices[1].delta.content
+                vim.schedule(function()
+                  ui.append_response(json.choices[1].delta.content)
+                end)
+              end
             end
           end
         end,
