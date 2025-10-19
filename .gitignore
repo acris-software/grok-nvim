@@ -1,38 +1,25 @@
-# ---> Lua
-# Compiled Lua sources
+# Lua-specific
 luac.out
-
-# luarocks build files
 *.src.rock
 *.zip
 *.tar.gz
-
-# Object files
 *.o
 *.os
 *.ko
 *.obj
 *.elf
-
-# Precompiled Headers
 *.gch
 *.pch
-
-# Libraries
 *.lib
 *.a
 *.la
 *.lo
 *.def
 *.exp
-
-# Shared objects (inc. Windows DLLs)
 *.dll
 *.so
 *.so.*
 *.dylib
-
-# Executables
 *.exe
 *.out
 *.app
@@ -40,4 +27,26 @@ luac.out
 *.x86_64
 *.hex
 
+# Neovim plugin development
+*.log
+*.cache
+*.swp
+*.swo
+undo/
+session/
+tags
+*.lock
+lazy-lock.json
 
+# Editor and OS files
+.DS_Store
+*.bak
+*.tmp
+*.temp
+
+# Project-specific
+.env
+secrets/
+dist/
+build/
+doc/tags
