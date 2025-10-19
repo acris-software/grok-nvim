@@ -1,4 +1,5 @@
 # Lua-specific
+todo*
 luac.out
 *.src.rock
 *.zip
@@ -55,3 +56,4 @@ secrets/
 dist/
 build/
 doc/tags
+*.xcf
