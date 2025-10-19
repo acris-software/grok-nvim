@@ -17,12 +17,18 @@ function M.setup_commands()
     vim.cmd("edit " .. log_file)
   end, { desc = "View Grok log file" })
   vim.api.nvim_create_user_command("GrokKeymaps", function()
-    local keymaps = {
-      "In Grok Chat Window:",
-      "  <CR>   Send query",
-      "  <Esc>  Close window",
-    }
-    vim.notify(table.concat(keymaps, "\n"), vim.log.levels.INFO)
+    local ui = require("grok.ui")
+    if ui.current_win and vim.api.nvim_win_is_valid(ui.current_win) then
+      ui.current_tab = 2
+      require("grok.ui.render").render_tab_content(ui.current_buf, function() end)
+    else
+      local keymaps = {
+        "In Grok Chat Window:",
+        " <CR> Send query",
+        " <Esc> Close window",
+      }
+      vim.notify(table.concat(keymaps, "\n"), vim.log.levels.INFO)
+    end
   end, { desc = "List Grok-nvim keymaps" })
 end
 return M
