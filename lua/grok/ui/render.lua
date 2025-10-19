@@ -14,10 +14,11 @@ local function render_tab_content(buf, callback)
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
   vim.api.nvim_buf_set_lines(buf, 1, -1, false, {})
   vim.cmd("stopinsert")
-  if require("grok.ui").current_tab == 1 then -- Grok
+  if require("grok.ui").current_tab == 1 then -- Grok/Chat
     vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "Grok: Ready! Type your query below:", "" })
     if require("grok.ui").current_win and vim.api.nvim_win_is_valid(require("grok.ui").current_win) then
       vim.api.nvim_win_set_cursor(require("grok.ui").current_win, { vim.api.nvim_buf_line_count(buf), 0 })
+      vim.api.nvim_command("startinsert")
     end
   elseif require("grok.ui").current_tab == 2 then -- Keymaps
     local keymaps = {
@@ -31,6 +32,7 @@ local function render_tab_content(buf, callback)
       "Tip: Press <Esc> to enter normal mode for navigation; 'i' to insert for typing in Grok tab.",
     }
     vim.api.nvim_buf_set_lines(buf, -1, -1, false, keymaps)
+    vim.api.nvim_buf_set_option(buf, "modifiable", false)
   elseif require("grok.ui").current_tab == 3 then -- Config
     local config = require("grok").config
     local config_lines = {
@@ -39,12 +41,12 @@ local function render_tab_content(buf, callback)
       "  Temperature: " .. config.temperature,
       "  Max Tokens: " .. config.max_tokens,
       "  Debug: " .. tostring(config.debug),
-      -- TODO: Add more
+      -- Add more as config expands
     }
     vim.api.nvim_buf_set_lines(buf, -1, -1, false, config_lines)
+    vim.api.nvim_buf_set_option(buf, "modifiable", false) -- Lock non-chat tabs
   end
   render_tab_header(buf) -- Refresh header with highlight
-  vim.api.nvim_buf_set_option(buf, "modifiable", false) -- Lock non-chat tabs
 end
 
 local function append_response(text)
@@ -69,7 +71,7 @@ local function append_response(text)
     require("grok.ui").current_win,
     { vim.api.nvim_buf_line_count(require("grok.ui").current_buf), 0 }
   )
-  vim.api.nvim_buf_set_option(require("grok.ui").current_buf, "modifiable", true)
+  vim.api.nvim_buf_set_option(require("grok.ui").current_buf, "modifiable", true) -- Keep modifiable after append
 end
 
 return {
