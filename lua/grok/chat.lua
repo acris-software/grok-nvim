@@ -1,8 +1,10 @@
+-- ~/github.com/acris-software/grok-nvim/lua/grok/chat.lua
+
 local M = {}
 local curl = require("plenary.curl")
 local async = require("plenary.async")
 local ui = require("grok.ui")
-
+local log = require("grok.log")
 function M.chat(prompt)
   local config = require("grok").config
   if not config.api_key then
@@ -18,8 +20,14 @@ function M.chat(prompt)
         max_tokens = config.max_tokens,
         stream = true,
       })
-      vim.notify("Request body: " .. body, vim.log.levels.DEBUG)
+      log.log("Request body: " .. body)
       local response = ""
+      local is_first_chunk = true
+      vim.schedule(function()
+        vim.api.nvim_buf_set_lines(ui.current_buf, -2, -1, false, { "Grok: Reasoning..." })
+        vim.api.nvim_win_set_cursor(ui.current_win, { vim.api.nvim_buf_line_count(ui.current_buf), 0 })
+        vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", false)
+      end)
       curl.post(config.base_url .. "/chat/completions", {
         headers = {
           authorization = "Bearer " .. config.api_key,
@@ -29,26 +37,60 @@ function M.chat(prompt)
         stream = function(err, data, _)
           if err then
             vim.schedule(function()
+              vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", true)
               ui.append_response("Error: " .. vim.inspect(err))
+              vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", true)
             end)
             return
           end
           if data then
-            vim.notify("Stream data: " .. data, vim.log.levels.DEBUG)
-            local ok, json = pcall(vim.json.decode, data)
-            if ok and json.choices and json.choices[1].delta and json.choices[1].delta.content then
-              response = response .. json.choices[1].delta.content
+            log.log("Stream data: " .. data)
+            local json_str = data:gsub("^data: ", "")
+            if json_str == "[DONE]" then
               vim.schedule(function()
-                ui.append_response(json.choices[1].delta.content)
+                ui.append_response("\n\n")
+                vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", true)
+                vim.api.nvim_buf_set_lines(ui.current_buf, -1, -1, false, { "" })
+                vim.api.nvim_win_set_cursor(ui.current_win, { vim.api.nvim_buf_line_count(ui.current_buf), 0 })
+                vim.api.nvim_command("startinsert")
+                vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", true)
               end)
+              return
+            end
+            local ok, json = pcall(vim.json.decode, json_str)
+            if ok and json.choices and json.choices[1].delta then
+              local delta_content = json.choices[1].delta.content or json.choices[1].delta.reasoning_content or ""
+              if delta_content ~= "" then
+                response = response .. delta_content
+                vim.schedule(function()
+                  if is_first_chunk then
+                    is_first_chunk = false
+                    vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", true)
+                    local line_count = vim.api.nvim_buf_line_count(ui.current_buf)
+                    vim.api.nvim_buf_set_lines(
+                      ui.current_buf,
+                      line_count - 1,
+                      line_count,
+                      false,
+                      { "Grok: " .. delta_content }
+                    )
+                    vim.api.nvim_win_set_cursor(ui.current_win, { line_count, #("Grok: " .. delta_content) })
+                    vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", false)
+                  else
+                    ui.append_response(delta_content)
+                  end
+                end)
+              end
             end
           end
         end,
         callback = function(res)
           vim.schedule(function()
-            vim.notify("Response status: " .. res.status, vim.log.levels.DEBUG)
+            log.log("Response status: " .. res.status)
             if res.status ~= 200 then
+              vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", true)
               ui.append_response("Error: " .. res.status .. " - " .. (res.body or "API issue"))
+              vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", true)
             end
           end)
         end,
@@ -56,5 +98,4 @@ function M.chat(prompt)
     end)
   end)
 end
-
 return M
