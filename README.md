@@ -1,5 +1,7 @@
 # grok.nvim
-
+<a href="https://dotfyle.com/acris-software/grok-nvim-lua-grok"><img src="https://dotfyle.com/acris-software/grok-nvim-lua-grok/badges/plugins?style=for-the-badge" /></a>
+<a href="https://dotfyle.com/acris-software/grok-nvim-lua-grok"><img src="https://dotfyle.com/acris-software/grok-nvim-lua-grok/badges/leaderkey?style=for-the-badge" /></a>
+<a href="https://dotfyle.com/acris-software/grok-nvim-lua-grok"><img src="https://dotfyle.com/acris-software/grok-nvim-lua-grok/badges/plugin-manager?style=for-the-badge" /></a>
 ![grok-nvim](https://github.com/acris-software/grok-nvim/blob/dev/assets/images/grok-nvim.jpg)
 
 ## Project Overview
