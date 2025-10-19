@@ -7,7 +7,7 @@ function M.chat(prompt)
   local config = require("grok").config -- Access config from init
 
   if not config.api_key then
-    vim.notify("GROK_API_KEY not set!", vim.log.levels.ERROR)
+    vim.notify("GROK_KEY not set!", vim.log.levels.ERROR)
     return
   end
   async.run(function()

@@ -27,7 +27,7 @@ function M.setup(opts)
   end
 
   -- Set the API key, preferring the file, then environment variable, then opts
-  local api_key = load_api_key() or vim.env.GROK_API_KEY or (opts and opts.api_key)
+  local api_key = load_api_key() or vim.env.GROK_KEY or (opts and opts.api_key)
 
   M.config = vim.tbl_deep_extend("force", {
     api_key = api_key,
@@ -38,7 +38,7 @@ function M.setup(opts)
   }, opts or {})
 
   if not M.config.api_key then
-    vim.notify("GROK_API_KEY not set in ~/.secrets, environment, or opts!", vim.log.levels.ERROR)
+    vim.notify("GROK_KEY not set in ~/.secrets, environment, or opts!", vim.log.levels.ERROR)
   end
 
   -- Expose chat function
