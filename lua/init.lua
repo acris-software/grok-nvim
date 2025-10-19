@@ -1,4 +1,5 @@
 local M = {}
+local commands = require("grok.commands")
 
 function M.setup(opts)
   local curl = require("plenary.curl")
@@ -39,6 +40,7 @@ function M.setup(opts)
   end
 
   M.chat = chat.chat
+  commands.setup_commands()
 end
 
 return M
