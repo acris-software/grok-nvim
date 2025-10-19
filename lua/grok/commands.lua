@@ -1,7 +1,6 @@
 -- ~/github.com/acris-software/grok-nvim/lua/grok/commands.lua
 
 local M = {}
-
 function M.setup_commands()
   vim.api.nvim_create_user_command("Grok", function(opts)
     require("grok").chat(opts.args)
@@ -17,6 +16,13 @@ function M.setup_commands()
     local log_file = vim.fn.stdpath("data") .. "/grok.log"
     vim.cmd("edit " .. log_file)
   end, { desc = "View Grok log file" })
+  vim.api.nvim_create_user_command("GrokKeymaps", function()
+    local keymaps = {
+      "In Grok Chat Window:",
+      "  <CR>   Send query",
+      "  <Esc>  Close window",
+    }
+    vim.notify(table.concat(keymaps, "\n"), vim.log.levels.INFO)
+  end, { desc = "List Grok-nvim keymaps" })
 end
-
 return M

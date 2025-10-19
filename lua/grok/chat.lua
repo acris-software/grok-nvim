@@ -12,10 +12,12 @@ function M.chat(prompt)
     return
   end
   async.run(function()
+    local history = {}
     ui.open_chat_window(function(input)
+      table.insert(history, { role = "user", content = input })
       local body = vim.json.encode({
         model = config.model,
-        messages = { { role = "user", content = prompt .. "\n\n" .. input } },
+        messages = history,
         temperature = config.temperature,
         max_tokens = config.max_tokens,
         stream = true,
@@ -55,6 +57,7 @@ function M.chat(prompt)
                 vim.api.nvim_command("startinsert")
                 vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", true)
               end)
+              table.insert(history, { role = "assistant", content = response })
               return
             end
             local ok, json = pcall(vim.json.decode, json_str)
@@ -96,6 +99,13 @@ function M.chat(prompt)
         end,
       })
     end)
+    if prompt and prompt ~= "" then
+      vim.schedule(function()
+        vim.api.nvim_buf_set_lines(ui.current_buf, -2, -1, false, { "", "You: " .. prompt, "" })
+        vim.api.nvim_win_set_cursor(ui.current_win, { vim.api.nvim_buf_line_count(ui.current_buf), 0 })
+        vim.api.nvim_command("startinsert")
+      end)
+    end
   end)
 end
 return M
