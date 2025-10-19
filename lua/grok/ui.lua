@@ -1,7 +1,7 @@
 -- ~/github.com/acris-software/grok-nvim/lua/grok/ui.lua
 
 local M = {}
-local ns = vim.api.nvim_create_namespace("grok_chat")
+M.ns = vim.api.nvim_create_namespace("grok_chat")
 M.current_buf = nil
 M.current_win = nil
 M.current_tab = 1

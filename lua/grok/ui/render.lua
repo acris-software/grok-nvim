@@ -7,29 +7,31 @@ local function render_tab_header(buf)
     table.insert(header, prefix .. tab_name)
   end
   vim.api.nvim_buf_set_lines(buf, 0, 1, false, { table.concat(header, " | ") })
-  vim.api.nvim_buf_add_highlight(buf, require("grok.ui").ns, "CursorLine", 0, 0, -1) -- Highlight header
+  vim.api.nvim_buf_add_highlight(buf, require("grok.ui").ns, "CursorLine", 0, 0, -1)
 end
 
 local function render_tab_content(buf, callback)
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
-  vim.api.nvim_buf_set_lines(buf, 1, -1, false, {}) -- Clear content below header
-  if require("grok.ui").current_tab == 1 then -- Grok/Chat
+  vim.api.nvim_buf_set_lines(buf, 1, -1, false, {})
+  vim.cmd("stopinsert")
+  if require("grok.ui").current_tab == 1 then -- Grok
     vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "Grok: Ready! Type your query below:", "" })
     if require("grok.ui").current_win and vim.api.nvim_win_is_valid(require("grok.ui").current_win) then
       vim.api.nvim_win_set_cursor(require("grok.ui").current_win, { vim.api.nvim_buf_line_count(buf), 0 })
-      vim.api.nvim_command("startinsert")
     end
-  elseif require("grok.ui").current_tab == 2 then
+  elseif require("grok.ui").current_tab == 2 then -- Keymaps
     local keymaps = {
       "In Grok Chat Window:",
-      "  <CR>   Send query",
-      "  <Esc>  Close window",
+      "  <CR>   Send query (in insert mode)",
+      "  <Esc>  Close window (in normal mode)",
       "Additional:",
-      "  <Left>/<Right> or arrows: Switch tabs",
-      "  [1]/[2]/[3]: Jump to tab",
+      "  <Tab> / <S-Tab>: Switch tabs forward/back (in normal or visual mode)",
+      "  [1]/[2]/[3]: Jump to tab (in normal or visual mode)",
+      "  i: Enter insert mode (in Grok tab only, from normal/visual)",
+      "Tip: Press <Esc> to enter normal mode for navigation; 'i' to insert for typing in Grok tab.",
     }
     vim.api.nvim_buf_set_lines(buf, -1, -1, false, keymaps)
-  elseif require("grok.ui").current_tab == 3 then
+  elseif require("grok.ui").current_tab == 3 then -- Config
     local config = require("grok").config
     local config_lines = {
       "Current Configuration:",

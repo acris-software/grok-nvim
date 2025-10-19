@@ -14,10 +14,10 @@ local function open_chat_window(callback)
   vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
   vim.api.nvim_buf_set_option(buf, "shiftwidth", 2)
   vim.api.nvim_win_set_option(win, "cursorline", true)
-  -- Enable syntax highlighting via Treesitter if available
+  -- Enable syntax highlighting via Treesitter
   pcall(require("nvim-treesitter.highlight").attach, buf, "markdown")
 
-  -- Set state before rendering to avoid nil errors
+  -- Set state
   require("grok.ui").current_buf = buf
   require("grok.ui").current_win = win
 
