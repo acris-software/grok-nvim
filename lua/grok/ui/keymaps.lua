@@ -12,7 +12,7 @@ local function set_keymaps(buf, win, callback)
   })
   vim.api.nvim_buf_set_keymap(buf, "n", "<Right>", "", {
     callback = function()
-      require("grok.ui").current_tab = math.min(3, require("grok.ui").current_tab + 1)
+      require("grok.ui").current_tab = math.min(#require("grok.ui").tabs, require("grok.ui").current_tab + 1)
       require("grok.ui.render").render_tab_content(buf, callback)
     end,
     noremap = true,
@@ -44,7 +44,7 @@ local function set_keymaps(buf, win, callback)
   })
   vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", "<cmd>close<CR>", { noremap = true, silent = true })
 
-  -- Grok-Tab only
+  -- Grok Only Tab
   vim.api.nvim_buf_set_keymap(buf, "i", "<CR>", "", {
     callback = function()
       if require("grok.ui").current_tab ~= 1 then

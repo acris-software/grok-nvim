@@ -1,10 +1,8 @@
 -- ~/github.com/acris-software/grok-nvim/lua/grok/ui/render.lua
 
-local tabs = { "1: Grok", "2: Keymaps", "3: Config" }
-
 local function render_tab_header(buf)
   local header = {}
-  for i, tab_name in ipairs(tabs) do
+  for i, tab_name in ipairs(require("grok.ui").tabs) do
     local prefix = (i == require("grok.ui").current_tab) and "> " or "  "
     table.insert(header, prefix .. tab_name)
   end
@@ -15,11 +13,13 @@ end
 local function render_tab_content(buf, callback)
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
   vim.api.nvim_buf_set_lines(buf, 1, -1, false, {}) -- Clear content below header
-  if require("grok.ui").current_tab == 1 then -- Grok
+  if require("grok.ui").current_tab == 1 then -- Grok/Chat
     vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "Grok: Ready! Type your query below:", "" })
-    vim.api.nvim_win_set_cursor(require("grok.ui").current_win, { vim.api.nvim_buf_line_count(buf), 0 })
-    vim.api.nvim_command("startinsert")
-  elseif require("grok.ui").current_tab == 2 then -- Keymaps
+    if require("grok.ui").current_win and vim.api.nvim_win_is_valid(require("grok.ui").current_win) then
+      vim.api.nvim_win_set_cursor(require("grok.ui").current_win, { vim.api.nvim_buf_line_count(buf), 0 })
+      vim.api.nvim_command("startinsert")
+    end
+  elseif require("grok.ui").current_tab == 2 then
     local keymaps = {
       "In Grok Chat Window:",
       "  <CR>   Send query",
@@ -29,7 +29,7 @@ local function render_tab_content(buf, callback)
       "  [1]/[2]/[3]: Jump to tab",
     }
     vim.api.nvim_buf_set_lines(buf, -1, -1, false, keymaps)
-  elseif require("grok.ui").current_tab == 3 then -- Config
+  elseif require("grok.ui").current_tab == 3 then
     local config = require("grok").config
     local config_lines = {
       "Current Configuration:",
