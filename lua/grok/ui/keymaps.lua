@@ -1,5 +1,4 @@
 -- ~/github.com/acris-software/grok-nvim/lua/grok/ui/keymaps.lua
-
 local function set_keymaps(buf, win, callback)
   -- Normal Mode
   vim.api.nvim_buf_set_keymap(buf, "n", "<Tab>", "", {
@@ -86,7 +85,7 @@ local function set_keymaps(buf, win, callback)
     silent = true,
   })
 
-  -- Insert Mode (grok tab only)
+  -- Insert Mode
   vim.api.nvim_buf_set_keymap(buf, "n", "i", "", {
     callback = function()
       if require("grok.ui").current_tab == 1 then
@@ -117,6 +116,7 @@ local function set_keymaps(buf, win, callback)
       if input:match("^%s*$") then
         return
       end
+      vim.api.nvim_buf_set_option(buf, "modifiable", true)
       vim.api.nvim_buf_set_lines(buf, -2, -1, false, { "", "You: " .. input, "" })
       vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
       vim.api.nvim_command("startinsert")

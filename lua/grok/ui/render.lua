@@ -69,7 +69,7 @@ local function append_response(text)
     require("grok.ui").current_win,
     { vim.api.nvim_buf_line_count(require("grok.ui").current_buf), 0 }
   )
-  vim.api.nvim_buf_set_option(require("grok.ui").current_buf, "modifiable", false)
+  vim.api.nvim_buf_set_option(require("grok.ui").current_buf, "modifiable", true)
 end
 
 return {
