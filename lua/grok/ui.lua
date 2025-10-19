@@ -1,4 +1,5 @@
 -- ~/github.com/acris-software/grok-nvim/lua/grok/ui.lua
+
 local M = {}
 local ns = vim.api.nvim_create_namespace("grok_chat")
 M.current_buf = nil
@@ -58,12 +59,14 @@ function M.append_response(text)
     vim.notify("Grok chat buffer or window closed!", vim.log.levels.WARN)
     return
   end
+  vim.api.nvim_buf_set_option(M.current_buf, "modifiable", true)
   local line_count = vim.api.nvim_buf_line_count(M.current_buf)
   local last_line = vim.api.nvim_buf_get_lines(M.current_buf, line_count - 1, line_count, false)[1] or ""
   local new_text = last_line .. text
   local lines = vim.split(new_text, "\n", { plain = true })
   vim.api.nvim_buf_set_lines(M.current_buf, line_count - 1, line_count, false, lines)
   vim.api.nvim_win_set_cursor(M.current_win, { vim.api.nvim_buf_line_count(M.current_buf), 0 })
+  vim.api.nvim_buf_set_option(M.current_buf, "modifiable", false)
 end
 function M.close_chat_window()
   if M.current_win and vim.api.nvim_win_is_valid(M.current_win) then
