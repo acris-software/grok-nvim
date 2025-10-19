@@ -1,10 +1,8 @@
 -- ~/github.com/acris-software/grok-nvim/lua/grok/ui.lua
-
 local M = {}
 local ns = vim.api.nvim_create_namespace("grok_chat")
 M.current_buf = nil
 M.current_win = nil
-
 function M.open_chat_window(callback)
   local buf = vim.api.nvim_create_buf(false, true)
   local win = vim.api.nvim_open_win(buf, true, {
@@ -27,10 +25,8 @@ function M.open_chat_window(callback)
   vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
   vim.api.nvim_buf_set_option(buf, "shiftwidth", 2)
   vim.api.nvim_win_set_option(win, "cursorline", true)
-
   -- Enable syntax highlighting via Treesitter if available
   pcall(require("nvim-treesitter.highlight").attach, buf, "markdown")
-
   vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "" })
   vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
   vim.api.nvim_command("startinsert")
@@ -52,7 +48,6 @@ function M.open_chat_window(callback)
   M.current_win = win
   return buf, win
 end
-
 function M.append_response(text)
   if
     not M.current_buf
@@ -63,12 +58,13 @@ function M.append_response(text)
     vim.notify("Grok chat buffer or window closed!", vim.log.levels.WARN)
     return
   end
-  local lines = vim.split(text, "\n")
-  vim.api.nvim_buf_set_lines(M.current_buf, -2, -1, false, lines)
+  local line_count = vim.api.nvim_buf_line_count(M.current_buf)
+  local last_line = vim.api.nvim_buf_get_lines(M.current_buf, line_count - 1, line_count, false)[1] or ""
+  local new_text = last_line .. text
+  local lines = vim.split(new_text, "\n", { plain = true })
+  vim.api.nvim_buf_set_lines(M.current_buf, line_count - 1, line_count, false, lines)
   vim.api.nvim_win_set_cursor(M.current_win, { vim.api.nvim_buf_line_count(M.current_buf), 0 })
-  vim.api.nvim_command("startinsert")
 end
-
 function M.close_chat_window()
   if M.current_win and vim.api.nvim_win_is_valid(M.current_win) then
     vim.api.nvim_win_close(M.current_win, true)
@@ -76,5 +72,4 @@ function M.close_chat_window()
   M.current_buf = nil
   M.current_win = nil
 end
-
 return M

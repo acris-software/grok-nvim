@@ -26,23 +26,16 @@ return {
     dependencies = { "nvim-lua/plenary.nvim" },
     branch = "dev",
     config = function()
-      -- Debug: Verify runtimepath
-      local rtp = table.concat(vim.api.nvim_list_runtime_paths(), "\n")
-      vim.notify("Runtimepath:\n" .. rtp, vim.log.levels.INFO)
-      local ok, grok = pcall(require, "grok")
-      if not ok then
-        vim.notify("Failed to load grok module: " .. grok, vim.log.levels.ERROR)
-        return
-      end
-      grok.setup({
+      require("grok").setup({
         model = "grok-3-mini",
         base_url = "https://api.x.ai/v1",
         temperature = 0.7,
         max_tokens = 256,
-        debug = false, -- Set to true for debug mode;
+        debug = false, -- Set true for debug mode
       })
     end,
   },
+}
 }```
 
 ## Usage
