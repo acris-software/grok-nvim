@@ -1,4 +1,5 @@
 local M = {}
+local commands = require("grok.commands")
 
 function M.setup(opts)
   local curl = require("plenary.curl")
@@ -6,7 +7,6 @@ function M.setup(opts)
   local ui = require("grok.ui")
   local chat = require("grok.chat")
 
-  -- Load the API key from ~/.secrets
   local function load_api_key()
     local home = os.getenv("HOME")
     local secrets_file = home .. "/.secrets"
@@ -26,23 +26,21 @@ function M.setup(opts)
     return nil
   end
 
-  -- Set the API key, preferring the file, then environment variable, then opts
   local api_key = load_api_key() or vim.env.GROK_KEY or (opts and opts.api_key)
-
   M.config = vim.tbl_deep_extend("force", {
     api_key = api_key,
-    model = "grok-beta",
+    model = "grok-3-mini",
     base_url = "https://api.x.ai/v1",
     temperature = 0.7,
-    max_tokens = 1024,
+    max_tokens = 256,
   }, opts or {})
 
   if not M.config.api_key then
     vim.notify("GROK_KEY not set in ~/.secrets, environment, or opts!", vim.log.levels.ERROR)
   end
 
-  -- Expose chat function
   M.chat = chat.chat
+  commands.setup_commands()
 end
 
 return M

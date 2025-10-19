@@ -14,7 +14,6 @@ function M.open_chat_window(callback)
     style = "minimal",
     border = "rounded",
   })
-
   vim.api.nvim_buf_set_lines(
     buf,
     0,
@@ -26,19 +25,16 @@ function M.open_chat_window(callback)
   vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
   vim.api.nvim_buf_set_option(buf, "shiftwidth", 2)
   vim.api.nvim_win_set_option(win, "cursorline", true)
-
-  -- Auto-enter insert mode at the bottom
   vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "" })
   vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
   vim.api.nvim_command("startinsert")
-
   vim.api.nvim_buf_set_keymap(buf, "i", "<CR>", "", {
     callback = function()
       local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
       local input = lines[#lines] or ""
       if input:match("^%s*$") then
         return
-      end -- Ignore empty input
+      end
       vim.api.nvim_buf_set_lines(buf, -2, -1, false, { "", "You: " .. input, "" })
       vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
       vim.api.nvim_command("startinsert")
@@ -46,7 +42,6 @@ function M.open_chat_window(callback)
     end,
   })
   vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", "<cmd>close<CR>", { noremap = true, silent = true })
-
   M.current_buf = buf
   M.current_win = win
   return buf, win
@@ -66,6 +61,14 @@ function M.append_response(text)
   vim.api.nvim_buf_set_lines(M.current_buf, -2, -1, false, lines)
   vim.api.nvim_win_set_cursor(M.current_win, { vim.api.nvim_buf_line_count(M.current_buf), 0 })
   vim.api.nvim_command("startinsert")
+end
+
+function M.close_chat_window()
+  if M.current_win and vim.api.nvim_win_is_valid(M.current_win) then
+    vim.api.nvim_win_close(M.current_win, true)
+  end
+  M.current_buf = nil
+  M.current_win = nil
 end
 
 return M

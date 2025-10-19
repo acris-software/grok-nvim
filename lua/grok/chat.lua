@@ -4,8 +4,7 @@ local async = require("plenary.async")
 local ui = require("grok.ui")
 
 function M.chat(prompt)
-  local config = require("grok").config -- Access config from init
-
+  local config = require("grok").config
   if not config.api_key then
     vim.notify("GROK_KEY not set!", vim.log.levels.ERROR)
     return
@@ -19,7 +18,7 @@ function M.chat(prompt)
         max_tokens = config.max_tokens,
         stream = true,
       })
-      vim.notify("Request body: " .. body, vim.log.levels.DEBUG) -- Log request body
+      vim.notify("Request body: " .. body, vim.log.levels.DEBUG)
       local response = ""
       curl.post(config.base_url .. "/chat/completions", {
         headers = {
@@ -35,7 +34,7 @@ function M.chat(prompt)
             return
           end
           if data then
-            vim.notify("Stream data: " .. data, vim.log.levels.DEBUG) -- Log stream data
+            vim.notify("Stream data: " .. data, vim.log.levels.DEBUG)
             local ok, json = pcall(vim.json.decode, data)
             if ok and json.choices and json.choices[1].delta and json.choices[1].delta.content then
               response = response .. json.choices[1].delta.content
@@ -47,7 +46,7 @@ function M.chat(prompt)
         end,
         callback = function(res)
           vim.schedule(function()
-            vim.notify("Response status: " .. res.status, vim.log.levels.DEBUG) -- Log response status
+            vim.notify("Response status: " .. res.status, vim.log.levels.DEBUG)
             if res.status ~= 200 then
               ui.append_response("Error: " .. res.status .. " - " .. (res.body or "API issue"))
             end
