@@ -1,5 +1,7 @@
 # grok.nvim
 
+![grok-nvim](https://github.com/acris-software/grok-nvim/blob/dev/assets/images/grok-nvim.jpg)
+
 A Neovim plugin for integrating xAI's Grok AI, providing interactive chat, code explanations, and refactoring directly in your editor.
 
 ## Features
