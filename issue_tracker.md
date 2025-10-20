@@ -28,3 +28,16 @@
 
 - Modify ui/render.lua to apply extmarks to assistant response lines.
 - Update ui/keymaps.lua to prevent editing on protected lines.
+
+## Issue 4: Chat box needs to pop up in the center; possibly make the location configurable
+- **Problem:** In the Grok tab, user chat box input pops up in a weird space and cutting off everything the user has typed. We need to clean this up.
+- **Analysis:** The Grok tab works and allows user to make prompts, read the history, and not write-over Grok rresponses. UI/UX needs to be improved as the prompt box is bare minimal. User should be able to see everything they type and be able to scroll up/down after the prompt box has hit it's max height/width. Determine prompt character count based off Grok and what it currently will allow for the versoin the user is using. 
+- **Solution:** Update UI to include configurable location, allowing user to change in real-time and have the update applied in real-time via the config tab.
+- **Version:** UI polish affecting usability for v0.1.1’s UI requirements.
+
+*Changes:*
+
+- Add config location for prompt box (3 settings, left, center, right)
+- Clean up UI/UX and ensure user prompt scales with the users typing.
+
+
