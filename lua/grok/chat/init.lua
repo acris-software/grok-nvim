@@ -11,35 +11,36 @@ function M.chat(prompt)
   local config = require("grok").config
   if not config.api_key then
     vim.notify("GROK_KEY not set!", vim.log.levels.ERROR)
-    log.error("API key not set")
     return
   end
   async.run(function()
     ui.open_chat_window(function(input)
       local ok, err = pcall(function()
-        vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", true)
-        vim.api.nvim_buf_set_lines(ui.current_buf, -1, -1, false, { "", "You: " .. input, "" })
-        vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", false)
+        local buf = ui.current_buf
+        vim.api.nvim_buf_set_option(buf, "modifiable", true)
+        vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "", "You: " .. input, "" })
+        vim.api.nvim_buf_set_option(buf, "modifiable", false)
       end)
       if not ok then
-        log.error("Failed to append user input: " .. vim.inspect(err))
+        log.error("Append input failed: " .. vim.inspect(err))
       end
       request.send_request(input)
     end)
     if prompt and prompt ~= "" then
-      vim.schedule(function()
+      request.send_request(prompt)
+    else
+      util.create_floating_input(function(input)
         local ok, err = pcall(function()
-          vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", true)
-          vim.api.nvim_buf_set_lines(ui.current_buf, -1, -1, false, { "", "You: " .. prompt, "" })
-          vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", false)
+          local buf = ui.current_buf
+          vim.api.nvim_buf_set_option(buf, "modifiable", true)
+          vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "", "You: " .. input, "" })
+          vim.api.nvim_buf_set_option(buf, "modifiable", false)
         end)
         if not ok then
-          log.error("Failed to append initial prompt: " .. vim.inspect(err))
+          log.error("Append input failed: " .. vim.inspect(err))
         end
-        request.send_request(prompt)
+        request.send_request(input)
       end)
-    else
-      util.create_floating_input()
     end
   end)
 end
