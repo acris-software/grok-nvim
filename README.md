@@ -35,7 +35,7 @@ return {
   {
     "acris-software/grok-nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
-    branch = "dev",
+    branch = "master",
     config = function()
       require("grok").setup({
         model = "grok-3-mini",
@@ -52,7 +52,7 @@ return {
 ## Usage
 
 Chat: **`:Grok`** "Explain my Hyprland config" or <leader>gg to open a floating chat window.
-Code Analysis: In visual mode, select code and press <leader>gg to get explanations orಯ
+Code Analysis: In visual mode, select code and press <leader>gg to get explanations.
 Customize: Adjust model, temperature, or max_tokens in the setup function.
 
 Requirements
