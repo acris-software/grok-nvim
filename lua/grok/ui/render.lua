@@ -32,7 +32,7 @@ local function render_tab_content(buf, callback)
     end
     vim.api.nvim_buf_set_lines(buf, 1, -1, false, chat_lines)
     if require("grok.ui").current_win and vim.api.nvim_win_is_valid(require("grok.ui").current_win) then
-      vim.api.nvim_win_set_cursor(require("grok.ui").current_win, { vim.api.nvim_buf_line_count(buf), 0 })
+      require("grok.util").auto_scroll(buf, require("grok.ui").current_win) -- v0.1.1 Auto-scroll
     end
     render_tab_header(buf) -- Refresh header
     vim.api.nvim_buf_set_option(buf, "modifiable", false)
@@ -56,7 +56,8 @@ local function render_tab_content(buf, callback)
         " Temperature: " .. config.temperature,
         " Max Tokens: " .. config.max_tokens,
         " Debug: " .. tostring(config.debug),
-        -- TODO: Add more
+        " Prompt Position: " .. config.prompt_position, -- v0.1.1 Visible UI option
+        -- TODO: Add more; make editable? For real-time, use autocmd on BufLeave
       }
     end
     vim.api.nvim_buf_set_lines(buf, -1, -1, false, content_lines)
@@ -84,14 +85,12 @@ local function append_response(text)
     local new_text = last_line .. text
     local lines = vim.split(new_text, "\n", { plain = true })
     vim.api.nvim_buf_set_lines(require("grok.ui").current_buf, line_count - 1, line_count, false, lines)
-    vim.api.nvim_win_set_cursor(
-      require("grok.ui").current_win,
-      { vim.api.nvim_buf_line_count(require("grok.ui").current_buf), 0 }
-    )
+    require("grok.util").auto_scroll(require("grok.ui").current_buf, require("grok.ui").current_win) -- v0.1.1 Auto-scroll
     vim.api.nvim_buf_set_option(require("grok.ui").current_buf, "modifiable", false)
   end)
   if not ok then
     log.error("Failed to append response: " .. vim.inspect(err))
+    vim.notify("Error appending response!", vim.log.levels.ERROR)
   end
 end
 
