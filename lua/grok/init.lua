@@ -8,7 +8,6 @@ function M.setup(opts)
   local async = require("plenary.async")
   local ui = require("grok.ui")
   local chat = require("grok.chat")
-  local util = require("grok.util")
   local function load_api_key()
     local home = os.getenv("HOME")
     local secrets_file = home .. "/.secrets"
@@ -37,15 +36,13 @@ function M.setup(opts)
     temperature = 0.7,
     max_tokens = 256,
     debug = false,
-    prompt_position = "center", -- v0.1.1: UI Polish
   }, opts or {})
   if not M.config.api_key then
     vim.notify("GROK_KEY not set in ~/.secrets, environment, or opts!", vim.log.levels.ERROR)
     log.error("API key not set in setup")
   end
-  util.validate_config(M.config) -- v0.1.1: Validate new configs
   M.chat = chat.chat
   commands.setup_commands()
-  log.info("Plugin setup completed - grok-nvim v0.1.1")
+  log.info("Plugin setup completed")
 end
 return M

@@ -2,8 +2,6 @@
 
 local function set_keymaps(buf, win, callback)
   local log = require("grok.log")
-  log.debug("=== KEYMAPS: Setting keymaps for buf " .. buf)
-
   -- Normal Mode
   vim.api.nvim_buf_set_keymap(buf, "n", "<Tab>", "", {
     callback = function()
@@ -50,14 +48,7 @@ local function set_keymaps(buf, win, callback)
     noremap = true,
     silent = true,
   })
-  vim.api.nvim_buf_set_keymap(
-    buf,
-    "n",
-    "<Esc>",
-    "<cmd>lua require('grok.ui').close_chat_window()<CR>",
-    { noremap = true, silent = true }
-  )
-
+  vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", "<cmd>close<CR>", { noremap = true, silent = true })
   -- Visual Mode
   vim.api.nvim_buf_set_keymap(buf, "v", "<Tab>", "", {
     callback = function()
@@ -104,33 +95,55 @@ local function set_keymaps(buf, win, callback)
     noremap = true,
     silent = true,
   })
-
-  -- Grok Tab specific: Send query with floating input in normal mode
+  -- Grok Tab specific: Send query with vim.ui.input in normal mode
   vim.api.nvim_buf_set_keymap(buf, "n", "<CR>", "", {
     callback = function()
-      local current_tab = require("grok.ui").current_tab
-      log.debug("=== KEYMAPS: CR pressed, tab=" .. current_tab)
-      if current_tab ~= 1 then
-        log.debug("CR ignored - not in tab 1")
+      if require("grok.ui").current_tab ~= 1 then
         return
       end
-      log.debug("=== KEYMAPS: CR → Opening floating input")
-      require("grok.util").create_floating_input({})
+      log.debug("CR pressed in normal mode, opening input prompt")
+      vim.ui.input({ prompt = "Enter query: " }, function(input)
+        if not input or input:match("^%s*$") then
+          return
+        end
+        local ok, err = pcall(function()
+          vim.api.nvim_buf_set_option(buf, "modifiable", true)
+          vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "", "You: " .. input, "" })
+          vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
+          vim.api.nvim_buf_set_option(buf, "modifiable", false)
+        end)
+        if not ok then
+          log.error("Failed to append user input: " .. vim.inspect(err))
+          return
+        end
+        callback(input)
+      end)
     end,
     noremap = true,
     silent = true,
   })
-
   vim.api.nvim_buf_set_keymap(buf, "n", "i", "", {
     callback = function()
-      local current_tab = require("grok.ui").current_tab
-      log.debug("=== KEYMAPS: i pressed, tab=" .. current_tab)
-      if current_tab ~= 1 then
-        log.debug("i ignored - not in tab 1")
+      if require("grok.ui").current_tab ~= 1 then
         return
       end
-      log.debug("=== KEYMAPS: i → Opening floating input")
-      require("grok.util").create_floating_input({})
+      log.debug("i pressed in normal mode, opening input prompt")
+      vim.ui.input({ prompt = "Enter query: " }, function(input)
+        if not input or input:match("^%s*$") then
+          return
+        end
+        local ok, err = pcall(function()
+          vim.api.nvim_buf_set_option(buf, "modifiable", true)
+          vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "", "You: " .. input, "" })
+          vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
+          vim.api.nvim_buf_set_option(buf, "modifiable", false)
+        end)
+        if not ok then
+          log.error("Failed to append user input: " .. vim.inspect(err))
+          return
+        end
+        callback(input)
+      end)
     end,
     noremap = true,
     silent = true,

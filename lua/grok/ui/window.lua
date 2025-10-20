@@ -33,17 +33,6 @@ local function open_chat_window(callback)
   require("grok.ui.render").render_tab_content(buf, callback)
   -- Set keymaps
   require("grok.ui.keymaps").set_keymaps(buf, win, callback)
-  -- v0.1.1: Real-time config updates
-  vim.api.nvim_create_autocmd("BufLeave", {
-    buffer = buf,
-    callback = function()
-      if require("grok.ui").current_tab == 3 then
-        -- Reload UI options (no basics overwrite)
-        local config = require("grok").config
-        -- Example: re-apply prompt_position
-      end
-    end,
-  })
   return buf, win
 end
 
@@ -52,9 +41,6 @@ local function close_chat_window()
   log.info("Closing chat window")
   if require("grok.ui").current_win and vim.api.nvim_win_is_valid(require("grok.ui").current_win) then
     vim.api.nvim_win_close(require("grok.ui").current_win, true)
-  end
-  if require("grok.ui").current_buf and vim.api.nvim_buf_is_valid(require("grok.ui").current_buf) then
-    vim.api.nvim_buf_delete(require("grok.ui").current_buf, { force = true })
   end
   require("grok.ui").current_buf = nil
   require("grok.ui").current_win = nil

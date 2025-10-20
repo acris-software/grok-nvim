@@ -7,15 +7,15 @@ local function render_tab_header(buf)
     table.insert(header, prefix .. tab_name)
   end
   vim.api.nvim_buf_set_lines(buf, 0, 1, false, { table.concat(header, " | ") })
-  vim.api.nvim_buf_add_highlight(buf, require("grok.ui").ns, "CursorLine", 0, 0, -1)
+  vim.api.nvim_buf_add_highlight(buf, require("grok.ui").ns, "CursorLine", 0, 0, -1) -- Highlight header
 end
 
 local function render_tab_content(buf, callback)
-  local history = require("grok.chat.history").get()
+  local history = require("grok.chat.history").get() -- For re-rendering (Issue 1)
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
   vim.api.nvim_buf_set_lines(buf, 1, -1, false, {})
   vim.cmd("stopinsert")
-  if require("grok.ui").current_tab == 1 then -- Grok
+  if require("grok.ui").current_tab == 1 then -- Grok/Chat
     local chat_lines = {}
     for _, msg in ipairs(history) do
       local role = msg.role == "user" and "You" or "Grok"
@@ -32,9 +32,9 @@ local function render_tab_content(buf, callback)
     end
     vim.api.nvim_buf_set_lines(buf, 1, -1, false, chat_lines)
     if require("grok.ui").current_win and vim.api.nvim_win_is_valid(require("grok.ui").current_win) then
-      require("grok.util").auto_scroll(buf, require("grok.ui").current_win)
+      vim.api.nvim_win_set_cursor(require("grok.ui").current_win, { vim.api.nvim_buf_line_count(buf), 0 })
     end
-    render_tab_header(buf)
+    render_tab_header(buf) -- Refresh header
     vim.api.nvim_buf_set_option(buf, "modifiable", false)
   else
     local content_lines = {}
@@ -56,12 +56,12 @@ local function render_tab_content(buf, callback)
         " Temperature: " .. config.temperature,
         " Max Tokens: " .. config.max_tokens,
         " Debug: " .. tostring(config.debug),
-        " Prompt Position: " .. config.prompt_position, -- v0.1.1
+        -- TODO: Add more
       }
     end
-    vim.api.nvim_buf_set_lines(buf, 1, -1, false, content_lines)
-    render_tab_header(buf)
-    vim.api.nvim_buf_set_option(buf, "modifiable", false)
+    vim.api.nvim_buf_set_lines(buf, -1, -1, false, content_lines)
+    render_tab_header(buf) -- Refresh header before locking
+    vim.api.nvim_buf_set_option(buf, "modifiable", false) -- Lock non-chat tabs
   end
 end
 
@@ -77,15 +77,18 @@ local function append_response(text)
     return
   end
   local ok, err = pcall(function()
-    local buf = require("grok.ui").current_buf
-    vim.api.nvim_buf_set_option(buf, "modifiable", true)
-    local line_count = vim.api.nvim_buf_line_count(buf)
-    local last_line = vim.api.nvim_buf_get_lines(buf, line_count - 1, line_count, false)[1] or ""
+    vim.api.nvim_buf_set_option(require("grok.ui").current_buf, "modifiable", true)
+    local line_count = vim.api.nvim_buf_line_count(require("grok.ui").current_buf)
+    local last_line = vim.api.nvim_buf_get_lines(require("grok.ui").current_buf, line_count - 1, line_count, false)[1]
+      or ""
     local new_text = last_line .. text
     local lines = vim.split(new_text, "\n", { plain = true })
-    vim.api.nvim_buf_set_lines(buf, line_count - 1, line_count, false, lines)
-    require("grok.util").auto_scroll(buf, require("grok.ui").current_win)
-    vim.api.nvim_buf_set_option(buf, "modifiable", false)
+    vim.api.nvim_buf_set_lines(require("grok.ui").current_buf, line_count - 1, line_count, false, lines)
+    vim.api.nvim_win_set_cursor(
+      require("grok.ui").current_win,
+      { vim.api.nvim_buf_line_count(require("grok.ui").current_buf), 0 }
+    )
+    vim.api.nvim_buf_set_option(require("grok.ui").current_buf, "modifiable", false)
   end)
   if not ok then
     log.error("Failed to append response: " .. vim.inspect(err))
