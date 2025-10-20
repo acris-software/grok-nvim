@@ -131,6 +131,7 @@ local function set_keymaps(buf, win, callback)
       vim.api.nvim_buf_set_option(buf, "modifiable", true)
       vim.api.nvim_buf_set_lines(buf, -2, -1, false, { "", "You: " .. input, "" })
       vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
+      require("grok.ui").protected_end = vim.api.nvim_buf_line_count(buf) - 1 -- Update protected (Issue 3)
       vim.api.nvim_command("startinsert")
       callback(input)
     end,
