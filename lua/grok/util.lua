@@ -78,6 +78,8 @@ function M.create_floating_input(opts)
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
   vim.api.nvim_buf_set_option(buf, "buftype", "prompt")
   -- Clear any existing text to prevent unwanted characters
+  vim.fn.prompt_setprompt(buf, "")
+  log.debug("Prompt set to empty string")
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
   -- Store callback in buffer variable
   if opts.callback then
