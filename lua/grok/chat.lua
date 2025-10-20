@@ -5,6 +5,10 @@ local curl = require("plenary.curl")
 local async = require("plenary.async")
 local ui = require("grok.ui")
 local log = require("grok.log")
+
+-- Initialize conversation history
+local history = {}
+
 function M.chat(prompt)
   local config = require("grok").config
   if not config.api_key then
@@ -13,7 +17,6 @@ function M.chat(prompt)
     return
   end
   async.run(function()
-    local history = {}
     ui.open_chat_window(function(input)
       table.insert(history, { role = "user", content = input })
       local body = vim.json.encode({
@@ -153,7 +156,11 @@ function M.chat(prompt)
     end)
     if prompt and prompt ~= "" then
       vim.schedule(function()
-        local ok, err = pcall(vim.api.nvim_buf_set_lines, ui.current_buf, -2, -1, false, { "", "You: " .. prompt, "" })
+        local ok, err = pcall(vim.api.nvim_buf_set_option, ui.current_buf, "modifiable", true)
+        if not ok then
+          log.error("Failed to set modifiable for initial prompt: " .. vim.inspect(err))
+        end
+        ok, err = pcall(vim.api.nvim_buf_set_lines, ui.current_buf, -2, -1, false, { "", "You: " .. prompt, "" })
         if not ok then
           log.error("Failed to set initial prompt lines: " .. vim.inspect(err))
         end
@@ -161,12 +168,28 @@ function M.chat(prompt)
         if not ok then
           log.error("Failed to set cursor for initial prompt: " .. vim.inspect(err))
         end
+        -- Call callback to send the prompt
+        callback(prompt)
+      end)
+    else
+      vim.schedule(function()
+        local ok, err =
+          pcall(vim.api.nvim_win_set_cursor, ui.current_win, { vim.api.nvim_buf_line_count(ui.current_buf), 0 })
+        if not ok then
+          log.error("Failed to set cursor: " .. vim.inspect(err))
+        end
         ok, err = pcall(vim.api.nvim_command, "startinsert")
         if not ok then
-          log.error("Failed to start insert for initial prompt: " .. vim.inspect(err))
+          log.error("Failed to start insert: " .. vim.inspect(err))
         end
       end)
     end
   end)
 end
+
+function M.clear_history()
+  history = {}
+  log.info("Conversation history cleared")
+end
+
 return M
