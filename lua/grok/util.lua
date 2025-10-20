@@ -73,14 +73,9 @@ function M.auto_scroll(buf, win)
 end
 
 function M.create_floating_input(opts)
-  throttled_debug("=== UTIL: create_floating_input START ===")
   local config = require("grok").config
   local max_length = M.get_model_max_tokens(config.model)
-  throttled_debug("=== UTIL: Max length = " .. max_length .. ", position = " .. config.prompt_position)
-
   local buf = vim.api.nvim_create_buf(false, true)
-  throttled_debug("=== UTIL: Created input buf " .. buf)
-
   local width = math.floor(vim.o.columns * 0.6)
   local height = 3
   local row, col
@@ -94,8 +89,6 @@ function M.create_floating_input(opts)
     row = math.floor(vim.o.lines * 0.1)
     col = math.floor(vim.o.columns * 0.3)
   end
-  throttled_debug("=== UTIL: Position row=" .. row .. ", col=" .. col)
-
   local win_opts = {
     relative = "editor",
     width = width,
@@ -106,20 +99,18 @@ function M.create_floating_input(opts)
     border = "rounded",
     title = "Enter Query (0/" .. max_length .. ")",
   }
-
   local win = vim.api.nvim_open_win(buf, true, win_opts)
-  throttled_debug("=== UTIL: Opened input win " .. win)
-
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
   vim.api.nvim_buf_set_option(buf, "buftype", "prompt")
   vim.cmd("startinsert")
 
-  -- THROTTLED
+  -- Char counter autocmd
+  local char_count = 0
   vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
     buffer = buf,
     callback = function()
       local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
-      local char_count = #text
+      char_count = #text
       if char_count > max_length then
         vim.notify("Prompt too long! Trimming to max (" .. max_length .. " chars).", vim.log.levels.WARN)
         text = text:sub(1, max_length)
@@ -127,52 +118,33 @@ function M.create_floating_input(opts)
         char_count = max_length
       end
       vim.api.nvim_win_set_config(win, { title = "Enter Query (" .. char_count .. "/" .. max_length .. ")" })
-
       local new_height = math.min(8, math.max(3, select(2, text:gsub("\n", "")) + 1))
       if new_height ~= height then
         height = new_height
         win_opts.height = height
         win_opts.row = math.floor((vim.o.lines - height) / 2)
         vim.api.nvim_win_set_config(win, win_opts)
-        throttled_debug("=== UTIL: Auto-grew height to " .. height)
       end
     end,
   })
 
-  -- Keymaps
-  vim.api.nvim_buf_set_keymap(buf, "i", "<CR>", "", {
+  local on_submit = opts and opts.on_submit
+  vim.api.nvim_buf_set_keymap(buf, "i", "", "", {
     callback = function()
-      throttled_debug("=== UTIL: CR pressed in input - SUBMITTING")
       local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
       vim.api.nvim_win_close(win, true)
-      throttled_debug("=== UTIL: Input submitted (" .. #text .. " chars)")
-      require("grok.chat").handle_input(text)
+      if on_submit then
+        on_submit(text) -- DIRECT CALL
+      end
     end,
     noremap = true,
     silent = true,
   })
 
-  vim.api.nvim_buf_set_keymap(buf, "i", "<Esc>", "", {
-    callback = function()
-      throttled_debug("=== UTIL: ESC pressed - CLOSING")
-      vim.api.nvim_win_close(win, true)
-    end,
-    noremap = true,
-    silent = true,
-  })
+  vim.api.nvim_buf_set_keymap(buf, "i", "", "close", { noremap = true, silent = true })
+  vim.api.nvim_buf_set_keymap(buf, "i", "", "%d _", { noremap = true, silent = true })
 
-  vim.api.nvim_buf_set_keymap(buf, "i", "<C-u>", "<cmd>%d _<CR>", { noremap = true, silent = true })
-
-  throttled_debug("=== UTIL: create_floating_input COMPLETE ===")
   return buf, win
-end
-
-function M.submit_input()
-  local buf = vim.api.nvim_get_current_buf()
-  local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
-  vim.api.nvim_win_close(0, true)
-  throttled_debug("=== UTIL: submit_input called (" .. #text .. " chars)")
-  require("grok.chat").handle_input(text)
 end
 
 return M

@@ -7,9 +7,6 @@ local log = require("grok.log")
 local request = require("grok.chat.request")
 local util = require("grok.util")
 
--- Store callback for floating input integration
-local pending_callback = nil
-
 function M.chat(prompt)
   local config = require("grok").config
   if not config.api_key then
@@ -21,7 +18,6 @@ function M.chat(prompt)
   async.run(function()
     ui.open_chat_window(function(input)
       log.debug("=== CHAT INIT: Callback received input: " .. (input or "nil"))
-      pending_callback = nil -- Clear
       local ok, err = pcall(function()
         vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", true)
         vim.api.nvim_buf_set_lines(ui.current_buf, -1, -1, false, { "", "You: " .. input, "" })
@@ -47,30 +43,24 @@ function M.chat(prompt)
       end)
     else
       log.debug("=== CHAT INIT: No prompt, opening floating input ===")
-      pending_callback = function(input)
-        log.debug("=== CHAT INIT: Floating callback triggered ===")
-        M._internal_submit(input)
-      end
-      util.create_floating_input({})
+
+      util.create_floating_input({
+        on_submit = function(input)
+          log.debug("=== CHAT INIT: Floating input submitted: " .. input)
+
+          local ok, err = pcall(function()
+            vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", true)
+            vim.api.nvim_buf_set_lines(ui.current_buf, -1, -1, false, { "", "You: " .. input, "" })
+            vim.api.nvim_buf_set_option(ui.current_buf, "modifiable", false)
+          end)
+          if not ok then
+            log.error("Failed to append user input: " .. vim.inspect(err))
+          end
+          request.send_request(input)
+        end,
+      })
     end
   end)
-end
-
--- Internal submit (called by floating input)
-function M._internal_submit(input)
-  log.debug("=== CHAT INIT: Internal submit: " .. input)
-  local callback = pending_callback
-  if callback then
-    callback(input)
-  else
-    log.error("=== CHAT INIT: ERROR - No pending callback!")
-  end
-end
-
--- Public handle_input for keymaps
-function M.handle_input(input)
-  log.debug("=== CHAT INIT: Public handle_input: " .. input)
-  M._internal_submit(input)
 end
 
 function M.clear_history()
