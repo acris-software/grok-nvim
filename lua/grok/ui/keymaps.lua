@@ -95,14 +95,14 @@ local function set_keymaps(buf, win, callback)
     noremap = true,
     silent = true,
   })
-  -- Grok Tab specific: Send query with floating input in normal mode
+  -- Grok Tab specific: Send query with vim.ui.input in normal mode
   vim.api.nvim_buf_set_keymap(buf, "n", "<CR>", "", {
     callback = function()
       if require("grok.ui").current_tab ~= 1 then
         return
       end
       log.debug("CR pressed in normal mode, opening input prompt")
-      require("grok.util").create_floating_input(function(input)
+      vim.ui.input({ prompt = "Enter query: " }, function(input)
         if not input or input:match("^%s*$") then
           return
         end
@@ -128,7 +128,7 @@ local function set_keymaps(buf, win, callback)
         return
       end
       log.debug("i pressed in normal mode, opening input prompt")
-      require("grok.util").create_floating_input(function(input)
+      vim.ui.input({ prompt = "Enter query: " }, function(input)
         if not input or input:match("^%s*$") then
           return
         end

@@ -5,6 +5,7 @@ local async = require("plenary.async")
 local ui = require("grok.ui")
 local log = require("grok.log")
 local request = require("grok.chat.request")
+local util = require("grok.util")
 
 function M.chat(prompt)
   local config = require("grok").config
@@ -37,8 +38,18 @@ function M.chat(prompt)
         end
         request.send_request(prompt)
       end)
+    else
+      -- v0.1.1: Use floating multi-line input
+      util.create_floating_input({})
     end
   end)
+end
+
+-- Update to handle submitted input from floating window
+function M.handle_input(input)
+  -- Called from util.submit_input; integrate with open_chat_window callback
+  -- Assuming callback is stored or global; for simplicity, direct to request
+  request.send_request(input)
 end
 
 function M.clear_history()

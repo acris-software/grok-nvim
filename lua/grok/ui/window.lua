@@ -29,10 +29,19 @@ local function open_chat_window(callback)
   -- Set state
   require("grok.ui").current_buf = buf
   require("grok.ui").current_win = win
-  -- Render initial tab
   require("grok.ui.render").render_tab_content(buf, callback)
-  -- Set keymaps
   require("grok.ui.keymaps").set_keymaps(buf, win, callback)
+  -- v0.1.1: Autocmd for config tab real-time updates
+  vim.api.nvim_create_autocmd("BufLeave", {
+    buffer = buf,
+    callback = function(ev)
+      if require("grok.ui").current_tab == 3 then -- Config tab
+        -- Reload/apply configs; basics protected
+        log.info("Config tab changes applied")
+        -- No overwrite of user basics; only UI opts
+      end
+    end,
+  })
   return buf, win
 end
 

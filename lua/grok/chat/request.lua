@@ -27,6 +27,7 @@ local function send_request(input)
     end)
     if not ok then
       log.error("Failed to set reasoning line: " .. vim.inspect(err))
+      vim.notify("UI Error: Failed to update reasoning!", vim.log.levels.ERROR)
     end
   end)
   curl.post(config.base_url .. "/chat/completions", {
@@ -47,6 +48,7 @@ local function send_request(input)
           if not ok then
             log.error("Failed to set modifiable false after error: " .. vim.inspect(set_err))
           end
+          vim.notify("API Error: Request failed!", vim.log.levels.ERROR)
         end)
         return
       end
@@ -122,6 +124,7 @@ local function send_request(input)
           if not ok then
             log.error("Failed to set modifiable false after non-200: " .. vim.inspect(set_err))
           end
+          vim.notify("API Error: Status " .. res.status, vim.log.levels.ERROR)
         end
       end)
     end,

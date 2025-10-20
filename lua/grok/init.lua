@@ -36,13 +36,17 @@ function M.setup(opts)
     temperature = 0.7,
     max_tokens = 256,
     debug = false,
+    -- v0.1.1 Additions: UI Polish
+    prompt_position = "center", -- Options: "left", "center", "right"
+    -- Hidden: max_prompt_length derived from model (not user-settable)
   }, opts or {})
   if not M.config.api_key then
     vim.notify("GROK_KEY not set in ~/.secrets, environment, or opts!", vim.log.levels.ERROR)
     log.error("API key not set in setup")
   end
+  require("grok.util").validate_config(M.config)
   M.chat = chat.chat
   commands.setup_commands()
-  log.info("Plugin setup completed")
+  log.info("Plugin setup completed - grok-nvim v0.1.1")
 end
 return M

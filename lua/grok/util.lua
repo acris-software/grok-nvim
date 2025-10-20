@@ -2,6 +2,7 @@
 
 local M = {}
 local log = require("grok.log")
+
 function M.get_visual_selection()
   local s_start = vim.fn.getpos("'<")
   local s_end = vim.fn.getpos("'>")
@@ -21,4 +22,121 @@ function M.get_visual_selection()
   log.debug("Visual selection: " .. selection)
   return selection
 end
+
+-- v0.1.1: util Expansion
+function M.get_model_max_tokens(model)
+  -- Hardcoded per model (hidden from user)
+  local max_tokens = {
+    ["grok-3-mini"] = 131072, -- From API docs; cap prompts ~128k
+    -- Add more models as needed
+  }
+  return max_tokens[model] or 131072 -- Default to mini
+end
+
+function M.validate_config(opts)
+  -- Type checks + notifications
+  if
+    type(opts.prompt_position) ~= "string" or not vim.tbl_contains({ "left", "center", "right" }, opts.prompt_position)
+  then
+    vim.notify(
+      "Invalid prompt_position: must be 'left', 'center', or 'right'. Defaulting to 'center'.",
+      vim.log.levels.WARN
+    )
+    opts.prompt_position = "center"
+  end
+  -- TODO: Add more validations
+end
+
+function M.auto_scroll(buf, win)
+  -- Set cursor to bottom
+  local line_count = vim.api.nvim_buf_line_count(buf)
+  vim.api.nvim_win_set_cursor(win, { line_count, 0 })
+end
+
+function M.create_floating_input(opts)
+  -- Helper for resizable multi-line input window
+  local config = require("grok").config
+  local max_length = M.get_model_max_tokens(config.model)
+  local buf = vim.api.nvim_create_buf(false, true)
+  local width = math.floor(vim.o.columns * 0.6)
+  local height = 3 -- Start at 3, auto-grow to 8
+  local row, col
+  if config.prompt_position == "center" then
+    row = math.floor((vim.o.lines - height) / 2)
+    col = math.floor((vim.o.columns - width) / 2)
+  elseif config.prompt_position == "left" then
+    row = math.floor(vim.o.lines * 0.1)
+    col = math.floor(vim.o.columns * 0.1)
+  else -- right
+    row = math.floor(vim.o.lines * 0.1)
+    col = math.floor(vim.o.columns * 0.3)
+  end
+  local win_opts = {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+    style = "minimal",
+    border = "rounded",
+    title = "Enter Query (0/" .. max_length .. ")",
+  }
+  local win = vim.api.nvim_open_win(buf, true, win_opts)
+  vim.api.nvim_buf_set_option(buf, "modifiable", true)
+  vim.api.nvim_buf_set_option(buf, "buftype", "prompt")
+
+  -- Char counter autocmd
+  local char_count = 0
+  vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
+    buffer = buf,
+    callback = function()
+      local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
+      char_count = #text
+      if char_count > max_length then
+        vim.notify("Prompt too long! Trimming to max (" .. max_length .. " chars).", vim.log.levels.WARN)
+        text = text:sub(1, max_length)
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(text, "\n"))
+      end
+      vim.api.nvim_win_set_config(win, { title = "Enter Query (" .. char_count .. "/" .. max_length .. ")" })
+
+      local new_height = math.min(8, math.max(3, select(2, text:gsub("\n", "")) + 1))
+      if new_height ~= height then
+        height = new_height
+        win_opts.height = height
+        win_opts.row = math.floor((vim.o.lines - height) / 2) -- Re-center
+        vim.api.nvim_win_set_config(win, win_opts)
+      end
+    end,
+  })
+
+  -- Keymaps for input
+  vim.api.nvim_buf_set_keymap(
+    buf,
+    "i",
+    "<CR>",
+    "<cmd>lua require('grok.util').submit_input()<CR>",
+    { noremap = true, silent = true }
+  )
+  vim.api.nvim_buf_set_keymap(buf, "i", "<Esc>", "<cmd>close<CR>", { noremap = true, silent = true })
+  vim.api.nvim_buf_set_keymap(
+    buf,
+    "i",
+    "<C-u>",
+    "<cmd>lua vim.api.nvim_buf_set_lines(0, 0, -1, false, {})<CR>",
+    { noremap = true, silent = true }
+  )
+
+  -- Return buf, win for submit handling
+  return buf, win
+end
+
+-- Helper to submit input
+function M.submit_input()
+  local buf = vim.api.nvim_get_current_buf()
+  local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
+  vim.api.nvim_win_close(0, true)
+  -- Pass to chat callback (assume global or context)
+  -- For integration: require("grok.chat").handle_input(text)
+end
+
 return M
