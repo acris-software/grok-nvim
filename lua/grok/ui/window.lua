@@ -29,38 +29,10 @@ local function open_chat_window(callback)
   -- Set state
   require("grok.ui").current_buf = buf
   require("grok.ui").current_win = win
-  require("grok.ui").protected_end = 0
   -- Render initial tab
   require("grok.ui.render").render_tab_content(buf, callback)
   -- Set keymaps
   require("grok.ui.keymaps").set_keymaps(buf, win, callback)
-  -- Add autocmds for read-only enforcement (Issue 3)
-  vim.api.nvim_create_autocmd("InsertEnter", {
-    buffer = buf,
-    callback = function()
-      local row, _ = unpack(vim.api.nvim_win_get_cursor(0))
-      if row <= require("grok.ui").protected_end then
-        vim.notify("Cannot edit past messages!", vim.log.levels.WARN)
-        vim.cmd("stopinsert")
-        local lc = vim.api.nvim_buf_line_count(0)
-        vim.api.nvim_win_set_cursor(0, { lc, 0 })
-        vim.cmd("startinsert")
-      end
-    end,
-  })
-  vim.api.nvim_create_autocmd({ "TextChangedI", "TextChangedP" }, {
-    buffer = buf,
-    callback = function()
-      local row, _ = unpack(vim.api.nvim_win_get_cursor(0))
-      if row <= require("grok.ui").protected_end then
-        vim.notify("Cannot edit past messages!", vim.log.levels.WARN)
-        vim.cmd("undo")
-        local lc = vim.api.nvim_buf_line_count(0)
-        vim.api.nvim_win_set_cursor(0, { lc, 0 })
-        vim.cmd("startinsert")
-      end
-    end,
-  })
   return buf, win
 end
 
