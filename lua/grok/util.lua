@@ -77,7 +77,7 @@ function M.create_floating_input(opts)
   local win = vim.api.nvim_open_win(buf, true, win_opts)
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
   vim.api.nvim_buf_set_option(buf, "buftype", "prompt")
-  -- Clear any existing text to prevent unwanted characters
+  -- Clear any existing text
   vim.fn.prompt_setprompt(buf, "")
   log.debug("Prompt set to empty string")
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
@@ -85,11 +85,15 @@ function M.create_floating_input(opts)
   if opts.callback then
     vim.api.nvim_buf_set_var(buf, "grok_callback", opts.callback)
   end
-  -- Char counter autocmd
+  -- Char counter autocmd with window validity check
   local char_count = 0
-  vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
+  local autocmd_id = vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
     buffer = buf,
     callback = function()
+      -- Check if window is still valid
+      if not vim.api.nvim_win_is_valid(win) then
+        return true -- Returning true removes the autocmd
+      end
       local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
       char_count = #text
       if char_count > max_length then
@@ -109,6 +113,13 @@ function M.create_floating_input(opts)
       end
     end,
   })
+  -- Clean up autocmd when buffer is deleted
+  vim.api.nvim_create_autocmd("BufWipeout", {
+    buffer = buf,
+    callback = function()
+      vim.api.nvim_del_autocmd(autocmd_id)
+    end,
+  })
   -- Keymaps for input
   vim.api.nvim_buf_set_keymap(
     buf,
@@ -117,7 +128,13 @@ function M.create_floating_input(opts)
     "<cmd>lua require('grok.util').submit_input()<CR>",
     { noremap = true, silent = true }
   )
-  vim.api.nvim_buf_set_keymap(buf, "i", "<Esc>", "<cmd>close<CR>", { noremap = true, silent = true })
+  vim.api.nvim_buf_set_keymap(
+    buf,
+    "i",
+    "<Esc>",
+    "<cmd>lua vim.api.nvim_win_close(0, true)<CR>",
+    { noremap = true, silent = true }
+  )
   vim.api.nvim_buf_set_keymap(
     buf,
     "i",
