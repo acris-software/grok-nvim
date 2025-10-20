@@ -29,6 +29,7 @@ local function open_chat_window(callback)
   -- Set state
   require("grok.ui").current_buf = buf
   require("grok.ui").current_win = win
+  require("grok.ui").current_callback = callback -- Store callback for use in util
   require("grok.ui.render").render_tab_content(buf, callback)
   require("grok.ui.keymaps").set_keymaps(buf, win, callback)
   -- v0.1.1: Autocmd for config tab real-time updates
@@ -53,6 +54,7 @@ local function close_chat_window()
   end
   require("grok.ui").current_buf = nil
   require("grok.ui").current_win = nil
+  require("grok.ui").current_callback = nil
 end
 
 return { open_chat_window = open_chat_window, close_chat_window = close_chat_window }

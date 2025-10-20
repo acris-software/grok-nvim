@@ -40,8 +40,9 @@ function M.chat(prompt)
         request.send_request(prompt)
       end)
     else
+      -- Directly open the floating input instead of simulating 'i'
       vim.schedule(function()
-        vim.api.nvim_feedkeys("i", "n", false)
+        util.create_floating_input({ callback = ui.current_callback })
       end)
     end
   end)

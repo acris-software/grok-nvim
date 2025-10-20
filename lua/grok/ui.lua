@@ -6,6 +6,7 @@ M.ns = vim.api.nvim_create_namespace("grok_chat")
 M.current_buf = nil
 M.current_win = nil
 M.current_tab = 1
+M.current_callback = nil
 M.tabs = { "1: Grok", "2: Keymaps", "3: Config" }
 M.open_chat_window = require("grok.ui.window").open_chat_window
 M.append_response = require("grok.ui.render").append_response
