@@ -30,6 +30,13 @@ function M.get_model_max_tokens(model)
   return max_tokens[model] or 131072
 end
 
+function M.get_model_max_chars(model_chars)
+  local max_chars = {
+    ["grok-3-mini"] = 2000,
+  }
+  return max_chars[model_chars] or 2000
+end
+
 function M.validate_config(opts)
   if
     type(opts.prompt_position) ~= "string" or not vim.tbl_contains({ "left", "center", "right" }, opts.prompt_position)

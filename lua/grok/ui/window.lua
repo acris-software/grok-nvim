@@ -2,7 +2,22 @@
 
 local function open_chat_window(callback)
   local log = require("grok.log")
-  log.info("Opening chat window")
+  local ui = require("grok.ui")
+
+  -- Return existing window if valid
+  if
+    ui.current_win
+    and vim.api.nvim_win_is_valid(ui.current_win)
+    and ui.current_buf
+    and vim.api.nvim_buf_is_valid(ui.current_buf)
+  then
+    vim.api.nvim_set_current_win(ui.current_win)
+    require("grok.ui.render").render_tab_content(ui.current_buf, callback)
+    log.debug("Reusing existing chat window: " .. ui.current_win)
+    return ui.current_buf, ui.current_win
+  end
+
+  log.info("Opening new chat window")
   local buf = vim.api.nvim_create_buf(false, true)
   local win = vim.api.nvim_open_win(buf, true, {
     relative = "editor",
@@ -27,20 +42,28 @@ local function open_chat_window(callback)
   end
   pcall(require("nvim-treesitter.highlight").attach, buf, "markdown")
   -- Set state
-  require("grok.ui").current_buf = buf
-  require("grok.ui").current_win = win
-  require("grok.ui").current_callback = callback -- Store callback for use in util
+  ui.current_buf = buf
+  ui.current_win = win
+  ui.current_callback = callback
   require("grok.ui.render").render_tab_content(buf, callback)
   require("grok.ui.keymaps").set_keymaps(buf, win, callback)
-  -- v0.1.1: Autocmd for config tab real-time updates
+  -- Autocmd for config tab real-time updates
   vim.api.nvim_create_autocmd("BufLeave", {
     buffer = buf,
-    callback = function(ev)
-      if require("grok.ui").current_tab == 3 then -- Config tab
-        -- Reload/apply configs; basics protected
+    callback = function()
+      if ui.current_tab == 3 then
         log.info("Config tab changes applied")
-        -- No overwrite of user basics; only UI opts
       end
+    end,
+  })
+  -- Clean up state on window close
+  vim.api.nvim_create_autocmd("WinClosed", {
+    pattern = tostring(win),
+    callback = function()
+      ui.current_buf = nil
+      ui.current_win = nil
+      ui.current_callback = nil
+      log.debug("Chat window closed, cleared UI state")
     end,
   })
   return buf, win
@@ -48,13 +71,14 @@ end
 
 local function close_chat_window()
   local log = require("grok.log")
+  local ui = require("grok.ui")
   log.info("Closing chat window")
-  if require("grok.ui").current_win and vim.api.nvim_win_is_valid(require("grok.ui").current_win) then
-    vim.api.nvim_win_close(require("grok.ui").current_win, true)
+  if ui.current_win and vim.api.nvim_win_is_valid(ui.current_win) then
+    vim.api.nvim_win_close(ui.current_win, true)
   end
-  require("grok.ui").current_buf = nil
-  require("grok.ui").current_win = nil
-  require("grok.ui").current_callback = nil
+  ui.current_buf = nil
+  ui.current_win = nil
+  ui.current_callback = nil
 end
 
 return { open_chat_window = open_chat_window, close_chat_window = close_chat_window }
