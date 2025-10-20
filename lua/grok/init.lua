@@ -3,6 +3,7 @@
 local M = {}
 local commands = require("grok.commands")
 local log = require("grok.log")
+
 function M.setup(opts)
   local curl = require("plenary.curl")
   local async = require("plenary.async")
@@ -49,4 +50,5 @@ function M.setup(opts)
   commands.setup_commands()
   log.info("Plugin setup completed - grok-nvim v0.1.1")
 end
+
 return M

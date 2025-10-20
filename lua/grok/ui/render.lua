@@ -15,14 +15,14 @@ local function render_tab_content(buf, callback)
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
   vim.api.nvim_buf_set_lines(buf, 1, -1, false, {})
   vim.cmd("stopinsert")
-  if require("grok.ui").current_tab == 1 then -- Grok/Chat
+  if require("grok.ui").current_tab == 1 then -- Grok
     local chat_lines = {}
     for _, msg in ipairs(history) do
       local role = msg.role == "user" and "You" or "Grok"
       local content_lines = vim.split(msg.content, "\n", { plain = true })
       table.insert(chat_lines, role .. ": " .. (content_lines[1] or ""))
       for i = 2, #content_lines do
-        table.insert(chat_lines, "  " .. content_lines[i])
+        table.insert(chat_lines, " " .. content_lines[i])
       end
       table.insert(chat_lines, "")
     end

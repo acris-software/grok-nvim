@@ -1,6 +1,7 @@
 -- ~/github.com/acris-software/grok-nvim/lua/grok/chat/init.lua
 
 local M = {}
+
 local async = require("plenary.async")
 local ui = require("grok.ui")
 local log = require("grok.log")
@@ -39,17 +40,11 @@ function M.chat(prompt)
         request.send_request(prompt)
       end)
     else
-      -- v0.1.1: Use floating multi-line input
-      util.create_floating_input({})
+      vim.schedule(function()
+        vim.api.nvim_feedkeys("i", "n", false)
+      end)
     end
   end)
-end
-
--- Update to handle submitted input from floating window
-function M.handle_input(input)
-  -- Called from util.submit_input; integrate with open_chat_window callback
-  -- Assuming callback is stored or global; for simplicity, direct to request
-  request.send_request(input)
 end
 
 function M.clear_history()

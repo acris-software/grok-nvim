@@ -95,29 +95,14 @@ local function set_keymaps(buf, win, callback)
     noremap = true,
     silent = true,
   })
-  -- Grok Tab specific: Send query with vim.ui.input in normal mode
+  -- Grok Tab specific: Open floating multi-line input in normal mode
   vim.api.nvim_buf_set_keymap(buf, "n", "<CR>", "", {
     callback = function()
       if require("grok.ui").current_tab ~= 1 then
         return
       end
-      log.debug("CR pressed in normal mode, opening input prompt")
-      vim.ui.input({ prompt = "Enter query: " }, function(input)
-        if not input or input:match("^%s*$") then
-          return
-        end
-        local ok, err = pcall(function()
-          vim.api.nvim_buf_set_option(buf, "modifiable", true)
-          vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "", "You: " .. input, "" })
-          vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
-          vim.api.nvim_buf_set_option(buf, "modifiable", false)
-        end)
-        if not ok then
-          log.error("Failed to append user input: " .. vim.inspect(err))
-          return
-        end
-        callback(input)
-      end)
+      log.debug("CR pressed in normal mode, opening floating input")
+      require("grok.util").create_floating_input({ callback = callback })
     end,
     noremap = true,
     silent = true,
@@ -127,26 +112,12 @@ local function set_keymaps(buf, win, callback)
       if require("grok.ui").current_tab ~= 1 then
         return
       end
-      log.debug("i pressed in normal mode, opening input prompt")
-      vim.ui.input({ prompt = "Enter query: " }, function(input)
-        if not input or input:match("^%s*$") then
-          return
-        end
-        local ok, err = pcall(function()
-          vim.api.nvim_buf_set_option(buf, "modifiable", true)
-          vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "", "You: " .. input, "" })
-          vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
-          vim.api.nvim_buf_set_option(buf, "modifiable", false)
-        end)
-        if not ok then
-          log.error("Failed to append user input: " .. vim.inspect(err))
-          return
-        end
-        callback(input)
-      end)
+      log.debug("i pressed in normal mode, opening floating input")
+      require("grok.util").create_floating_input({ callback = callback })
     end,
     noremap = true,
     silent = true,
   })
 end
+
 return { set_keymaps = set_keymaps }

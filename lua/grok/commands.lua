@@ -1,6 +1,7 @@
 -- ~/github.com/acris-software/grok-nvim/lua/grok/commands.lua
 
 local M = {}
+
 function M.setup_commands()
   local log = require("grok.log")
   vim.api.nvim_create_user_command("Grok", function(opts)
@@ -39,4 +40,5 @@ function M.setup_commands()
     end
   end, { desc = "List Grok-nvim keymaps" })
 end
+
 return M
