@@ -61,13 +61,15 @@ local function send_request(input)
             if not ok then
               log.error("Failed to set modifiable true for done: " .. vim.inspect(set_err))
             end
+            -- Ensure final response is appended
             ui.append_response("\n\n")
             ok, set_err = pcall(vim.api.nvim_buf_set_option, ui.current_buf, "modifiable", false)
             if not ok then
               log.error("Failed to set modifiable false after done: " .. vim.inspect(set_err))
             end
+            history.add("assistant", response)
+            log.debug("Stream completed, full response: " .. response)
           end)
-          history.add("assistant", response)
           return
         end
         local ok, json = pcall(vim.json.decode, json_str)
@@ -76,6 +78,10 @@ local function send_request(input)
           if delta_content ~= "" then
             response = response .. delta_content
             vim.schedule(function()
+              if not ui.current_buf or not vim.api.nvim_buf_is_valid(ui.current_buf) then
+                log.error("Chat buffer invalid during stream")
+                return
+              end
               if is_first_chunk then
                 is_first_chunk = false
                 local set_ok, set_err = pcall(vim.api.nvim_buf_set_option, ui.current_buf, "modifiable", true)
@@ -108,6 +114,8 @@ local function send_request(input)
               end
             end)
           end
+        else
+          log.debug("Invalid JSON or no delta in stream chunk: " .. json_str)
         end
       end
     end,
@@ -125,6 +133,23 @@ local function send_request(input)
             log.error("Failed to set modifiable false after non-200: " .. vim.inspect(set_err))
           end
           vim.notify("API Error: Status " .. res.status, vim.log.levels.ERROR)
+        else
+          -- Ensure final response is complete
+          if response ~= "" then
+            vim.schedule(function()
+              local ok, set_err = pcall(vim.api.nvim_buf_set_option, ui.current_buf, "modifiable", true)
+              if not ok then
+                log.error("Failed to set modifiable true for final response: " .. vim.inspect(set_err))
+              end
+              ui.append_response("\n\n")
+              ok, set_err = pcall(vim.api.nvim_buf_set_option, ui.current_buf, "modifiable", false)
+              if not ok then
+                log.error("Failed to set modifiable false after final response: " .. vim.inspect(set_err))
+              end
+              history.add("assistant", response)
+              log.debug("Final response appended: " .. response)
+            end)
+          end
         end
       end)
     end,

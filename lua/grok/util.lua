@@ -77,6 +77,8 @@ function M.create_floating_input(opts)
   local win = vim.api.nvim_open_win(buf, true, win_opts)
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
   vim.api.nvim_buf_set_option(buf, "buftype", "prompt")
+  -- Clear any existing text to prevent unwanted characters
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
   -- Store callback in buffer variable
   if opts.callback then
     vim.api.nvim_buf_set_var(buf, "grok_callback", opts.callback)
@@ -121,8 +123,8 @@ function M.create_floating_input(opts)
     "<cmd>lua vim.api.nvim_buf_set_lines(0, 0, -1, false, {})<CR>",
     { noremap = true, silent = true }
   )
-  -- Enter insert mode automatically
-  vim.cmd("startinsert")
+  -- Explicitly enter insert mode cleanly
+  vim.api.nvim_command("startinsert")
 end
 
 function M.submit_input()

@@ -42,6 +42,7 @@ function M.chat(prompt)
     else
       -- Directly open the floating input instead of simulating 'i'
       vim.schedule(function()
+        log.debug("Opening floating input with callback: " .. vim.inspect(ui.current_callback))
         util.create_floating_input({ callback = ui.current_callback })
       end)
     end
