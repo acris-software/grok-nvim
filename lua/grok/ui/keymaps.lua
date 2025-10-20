@@ -95,45 +95,58 @@ local function set_keymaps(buf, win, callback)
     noremap = true,
     silent = true,
   })
-  -- Insert Mode
-  vim.api.nvim_buf_set_keymap(buf, "n", "i", "", {
-    callback = function()
-      log.debug("i pressed in normal mode, attempting to enter insert in Grok tab")
-      if require("grok.ui").current_tab == 1 then
-        vim.api.nvim_command("startinsert")
-      end
-    end,
-    noremap = true,
-    silent = true,
-  })
-  vim.api.nvim_buf_set_keymap(buf, "v", "i", "", {
-    callback = function()
-      log.debug("i pressed in visual mode, attempting to enter insert in Grok tab")
-      if require("grok.ui").current_tab == 1 then
-        vim.api.nvim_command("startinsert")
-      end
-    end,
-    noremap = true,
-    silent = true,
-  })
-  -- Grok Tab specific: Send query in insert mode
-  vim.api.nvim_buf_set_keymap(buf, "i", "<CR>", "", {
+  -- Grok Tab specific: Send query with vim.ui.input in normal mode
+  vim.api.nvim_buf_set_keymap(buf, "n", "<CR>", "", {
     callback = function()
       if require("grok.ui").current_tab ~= 1 then
         return
       end
-      log.debug("CR pressed in insert mode, sending query")
-      local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-      local input = lines[#lines] or ""
-      if input:match("^%s*$") then
+      log.debug("CR pressed in normal mode, opening input prompt")
+      vim.ui.input({ prompt = "Enter query: " }, function(input)
+        if not input or input:match("^%s*$") then
+          return
+        end
+        local ok, err = pcall(function()
+          vim.api.nvim_buf_set_option(buf, "modifiable", true)
+          vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "", "You: " .. input, "" })
+          vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
+          vim.api.nvim_buf_set_option(buf, "modifiable", false)
+        end)
+        if not ok then
+          log.error("Failed to append user input: " .. vim.inspect(err))
+          return
+        end
+        callback(input)
+      end)
+    end,
+    noremap = true,
+    silent = true,
+  })
+  vim.api.nvim_buf_set_keymap(buf, "n", "i", "", {
+    callback = function()
+      if require("grok.ui").current_tab ~= 1 then
         return
       end
-      vim.api.nvim_buf_set_option(buf, "modifiable", true)
-      vim.api.nvim_buf_set_lines(buf, -2, -1, false, { "", "You: " .. input, "" })
-      vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
-      vim.api.nvim_command("startinsert")
-      callback(input)
+      log.debug("i pressed in normal mode, opening input prompt")
+      vim.ui.input({ prompt = "Enter query: " }, function(input)
+        if not input or input:match("^%s*$") then
+          return
+        end
+        local ok, err = pcall(function()
+          vim.api.nvim_buf_set_option(buf, "modifiable", true)
+          vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "", "You: " .. input, "" })
+          vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
+          vim.api.nvim_buf_set_option(buf, "modifiable", false)
+        end)
+        if not ok then
+          log.error("Failed to append user input: " .. vim.inspect(err))
+          return
+        end
+        callback(input)
+      end)
     end,
+    noremap = true,
+    silent = true,
   })
 end
 return { set_keymaps = set_keymaps }

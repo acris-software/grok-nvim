@@ -4,16 +4,17 @@ local M = {}
 function M.setup_commands()
   local log = require("grok.log")
   vim.api.nvim_create_user_command("Grok", function(opts)
-    require("grok").chat(opts.args)
+    require("grok.chat").chat(opts.args)
     log.debug("Grok command executed with args: " .. vim.inspect(opts.args))
   end, { nargs = "*", desc = "Chat with Grok" })
   vim.api.nvim_create_user_command("GrokVisual", function()
     local selected_text = require("grok.util").get_visual_selection()
-    require("grok").chat(selected_text)
+    require("grok.chat").chat(selected_text)
     log.debug("GrokVisual command executed with selection: " .. selected_text)
   end, { range = true, desc = "Chat with Grok using visual selection" })
   vim.api.nvim_create_user_command("GrokClear", function()
     require("grok.ui").close_chat_window()
+    require("grok.chat").clear_history()
     log.info("GrokClear command executed")
   end, { desc = "Clear and close Grok chat window" })
   vim.api.nvim_create_user_command("GrokLog", function()
@@ -30,8 +31,8 @@ function M.setup_commands()
     else
       local keymaps = {
         "In Grok Chat Window:",
-        " <CR> Send query",
-        " <Esc> Close window",
+        " <CR> or i: Open input prompt",
+        " <Esc>: Close window",
       }
       vim.notify(table.concat(keymaps, "\n"), vim.log.levels.INFO)
       log.debug("GrokKeymaps notified keymaps")
