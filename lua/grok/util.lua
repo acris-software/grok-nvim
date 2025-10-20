@@ -23,24 +23,37 @@ function M.get_visual_selection()
   return selection
 end
 
--- v0.1.1: util Expansion (DEBUG TOGGLE)
+-- v0.1.1: util Expansion (DEBUG TOGGLE + THROTTLE)
 local function debug_log(msg)
   if require("grok").config.debug then
     log.debug(msg)
   end
 end
 
+-- THROTTLE: 1 log/sec + dedupe
+local last_log_time = 0
+local last_msg = ""
+local function throttled_debug(msg)
+  local now = vim.loop.now() / 1000
+  if now - last_log_time < 1 or msg == last_msg then
+    return
+  end
+  last_log_time = now
+  last_msg = msg
+  debug_log(msg)
+end
+
 function M.get_model_max_tokens(model)
   local max_tokens = {
-    ["grok-3-mini"] = 131072, -- From API docs; cap prompts ~128k
+    ["grok-3-mini"] = 131072,
   }
   local result = max_tokens[model] or 131072
-  debug_log("=== UTIL: get_model_max_tokens(" .. model .. ") = " .. result)
+  throttled_debug("=== UTIL: get_model_max_tokens(" .. model .. ") = " .. result)
   return result
 end
 
 function M.validate_config(opts)
-  debug_log("=== UTIL: Validating config")
+  throttled_debug("=== UTIL: Validating config")
   if
     type(opts.prompt_position) ~= "string" or not vim.tbl_contains({ "left", "center", "right" }, opts.prompt_position)
   then
@@ -49,24 +62,24 @@ function M.validate_config(opts)
       vim.log.levels.WARN
     )
     opts.prompt_position = "center"
-    debug_log("WARN: Invalid prompt_position, defaulted to center")
+    throttled_debug("WARN: Invalid prompt_position, defaulted to center")
   end
 end
 
 function M.auto_scroll(buf, win)
   local line_count = vim.api.nvim_buf_line_count(buf)
   vim.api.nvim_win_set_cursor(win, { line_count, 0 })
-  debug_log("=== UTIL: Auto-scrolled to line " .. line_count)
+  throttled_debug("=== UTIL: Auto-scrolled to line " .. line_count)
 end
 
 function M.create_floating_input(opts)
-  debug_log("=== UTIL: create_floating_input START ===")
+  throttled_debug("=== UTIL: create_floating_input START ===")
   local config = require("grok").config
   local max_length = M.get_model_max_tokens(config.model)
-  debug_log("=== UTIL: Max length = " .. max_length .. ", position = " .. config.prompt_position)
+  throttled_debug("=== UTIL: Max length = " .. max_length .. ", position = " .. config.prompt_position)
 
   local buf = vim.api.nvim_create_buf(false, true)
-  debug_log("=== UTIL: Created input buf " .. buf)
+  throttled_debug("=== UTIL: Created input buf " .. buf)
 
   local width = math.floor(vim.o.columns * 0.6)
   local height = 3
@@ -77,11 +90,11 @@ function M.create_floating_input(opts)
   elseif config.prompt_position == "left" then
     row = math.floor(vim.o.lines * 0.1)
     col = math.floor(vim.o.columns * 0.1)
-  else -- right
+  else
     row = math.floor(vim.o.lines * 0.1)
     col = math.floor(vim.o.columns * 0.3)
   end
-  debug_log("=== UTIL: Position row=" .. row .. ", col=" .. col)
+  throttled_debug("=== UTIL: Position row=" .. row .. ", col=" .. col)
 
   local win_opts = {
     relative = "editor",
@@ -95,7 +108,7 @@ function M.create_floating_input(opts)
   }
 
   local win = vim.api.nvim_open_win(buf, true, win_opts)
-  debug_log("=== UTIL: Opened input win " .. win)
+  throttled_debug("=== UTIL: Opened input win " .. win)
 
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
   vim.api.nvim_buf_set_option(buf, "buftype", "prompt")
@@ -113,55 +126,42 @@ function M.create_floating_input(opts)
         text = text:sub(1, max_length)
         vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(text, "\n"))
         char_count = max_length
-        debug_log("=== UTIL: Trimmed prompt to " .. max_length .. " chars")
+        throttled_debug("=== UTIL: Trimmed prompt to " .. max_length .. " chars")
       end
       vim.api.nvim_win_set_config(win, { title = "Enter Query (" .. char_count .. "/" .. max_length .. ")" })
 
-      -- Auto-grow (efficient)
       local new_height = math.min(8, math.max(3, select(2, text:gsub("\n", "")) + 1))
       if new_height ~= height then
         height = new_height
         win_opts.height = height
         win_opts.row = math.floor((vim.o.lines - height) / 2)
         vim.api.nvim_win_set_config(win, win_opts)
-        debug_log("=== UTIL: Auto-grew height to " .. height)
+        throttled_debug("=== UTIL: Auto-grew height to " .. height)
       end
     end,
   })
 
-  -- Keymaps for input (FULL)
-  vim.api.nvim_buf_set_keymap(buf, "i", "<CR>", "", {
-    callback = function()
-      debug_log("=== UTIL: CR pressed in input - SUBMITTING")
-      local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
-      vim.api.nvim_win_close(win, true)
-      debug_log("=== UTIL: Input submitted: " .. text)
-      require("grok.chat").handle_input(text)
-    end,
-    noremap = true,
-    silent = true,
-  })
-
-  vim.api.nvim_buf_set_keymap(buf, "i", "<Esc>", "", {
-    callback = function()
-      debug_log("=== UTIL: ESC pressed - CLOSING")
-      vim.api.nvim_win_close(win, true)
-    end,
-    noremap = true,
-    silent = true,
-  })
-
+  -- FIXED KEYMAPS: Keep submit_input for compatibility
+  vim.api.nvim_buf_set_keymap(
+    buf,
+    "i",
+    "<CR>",
+    "<cmd>lua require('grok.util').submit_input(" .. buf .. ")<CR>",
+    { noremap = true, silent = true }
+  )
+  vim.api.nvim_buf_set_keymap(buf, "i", "<Esc>", "<cmd>close<CR>", { noremap = true, silent = true })
   vim.api.nvim_buf_set_keymap(buf, "i", "<C-u>", "<cmd>%d _<CR>", { noremap = true, silent = true })
 
-  debug_log("=== UTIL: create_floating_input COMPLETE ===")
+  throttled_debug("=== UTIL: create_floating_input COMPLETE ===")
   return buf, win
 end
 
-function M.submit_input()
-  local buf = vim.api.nvim_get_current_buf()
-  local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
-  vim.api.nvim_win_close(0, true)
-  debug_log("=== UTIL: submit_input called with: " .. text)
+function M.submit_input(buf)
+  local target_buf = buf or vim.api.nvim_get_current_buf()
+  local text = table.concat(vim.api.nvim_buf_get_lines(target_buf, 0, -1, false), "\n")
+  local win = vim.api.nvim_get_current_win()
+  vim.api.nvim_win_close(win, true)
+  throttled_debug("=== UTIL: submit_input called with: " .. #text .. " chars")
   require("grok.chat").handle_input(text)
 end
 
