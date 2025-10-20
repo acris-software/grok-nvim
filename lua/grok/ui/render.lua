@@ -15,7 +15,7 @@ local function render_tab_content(buf, callback)
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
   vim.api.nvim_buf_set_lines(buf, 1, -1, false, {})
   vim.cmd("stopinsert")
-  if require("grok.ui").current_tab == 1 then -- Grok/Chat
+  if require("grok.ui").current_tab == 1 then -- Grok
     local chat_lines = {}
     for _, msg in ipairs(history) do
       local role = msg.role == "user" and "You" or "Grok"
@@ -32,7 +32,7 @@ local function render_tab_content(buf, callback)
     end
     vim.api.nvim_buf_set_lines(buf, 1, -1, false, chat_lines)
     if require("grok.ui").current_win and vim.api.nvim_win_is_valid(require("grok.ui").current_win) then
-      require("grok.util").auto_scroll(buf, require("grok.ui").current_win) -- v0.1.1 Auto-scroll
+      M.auto_scroll(buf, require("grok.ui").current_win)
     end
     render_tab_header(buf) -- Refresh header
     vim.api.nvim_buf_set_option(buf, "modifiable", false)
@@ -56,8 +56,6 @@ local function render_tab_content(buf, callback)
         " Temperature: " .. config.temperature,
         " Max Tokens: " .. config.max_tokens,
         " Debug: " .. tostring(config.debug),
-        " Prompt Position: " .. config.prompt_position, -- v0.1.1 Visible UI option
-        -- TODO: Add more; make editable? For real-time, use autocmd on BufLeave
       }
     end
     vim.api.nvim_buf_set_lines(buf, -1, -1, false, content_lines)
@@ -85,12 +83,11 @@ local function append_response(text)
     local new_text = last_line .. text
     local lines = vim.split(new_text, "\n", { plain = true })
     vim.api.nvim_buf_set_lines(require("grok.ui").current_buf, line_count - 1, line_count, false, lines)
-    require("grok.util").auto_scroll(require("grok.ui").current_buf, require("grok.ui").current_win) -- v0.1.1 Auto-scroll
+    M.auto_scroll(require("grok.ui").current_buf, require("grok.ui").current_win)
     vim.api.nvim_buf_set_option(require("grok.ui").current_buf, "modifiable", false)
   end)
   if not ok then
     log.error("Failed to append response: " .. vim.inspect(err))
-    vim.notify("Error appending response!", vim.log.levels.ERROR)
   end
 end
 
