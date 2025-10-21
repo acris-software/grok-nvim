@@ -56,12 +56,19 @@ end
 
 function M.create_floating_input(opts)
   local config = require("grok").config
-  local max_length = M.get_model_max_tokens(config.model)
+  local max_length = M.get_model_max_chars(config.model) -- Changed from get_model_max_tokens
   local buf = vim.api.nvim_create_buf(false, true)
   local width = math.floor(vim.o.columns * 0.6)
   local height = 3
   local row = math.floor(vim.o.lines - height - 2) -- Bottom-aligned, 2 lines from edge
-  local col = math.floor((vim.o.columns - width) / 2) -- Centered horizontally
+  local col
+  if config.prompt_position == "left" then
+    col = math.floor(vim.o.columns * 0.1)
+  elseif config.prompt_position == "right" then
+    col = math.floor(vim.o.columns * 0.9 - width)
+  else -- center
+    col = math.floor((vim.o.columns - width) / 2)
+  end
   local win_opts = {
     relative = "editor",
     width = width,
@@ -78,8 +85,8 @@ function M.create_floating_input(opts)
       { "─", "GrokUser" },
       { "└", "GrokUser" },
       { "│", "GrokUser" },
-    }, -- Thin near-white border
-    title = "Enter Query (0/" .. max_length .. ")",
+    },
+    title = "Enter Query (0/" .. max_length .. " chars)", -- Updated to show chars
   }
   local win = vim.api.nvim_open_win(buf, true, win_opts)
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
@@ -104,12 +111,12 @@ function M.create_floating_input(opts)
         text = text:sub(1, max_length)
         vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(text, "\n"))
       end
-      vim.api.nvim_win_set_config(win, { title = "Enter Query (" .. char_count .. "/" .. max_length .. ")" })
+      vim.api.nvim_win_set_config(win, { title = "Enter Query (" .. char_count .. "/" .. max_length .. " chars)" })
       local new_height = math.min(8, math.max(3, select(2, text:gsub("\n", "")) + 1))
       if new_height ~= height then
         height = new_height
         win_opts.height = height
-        win_opts.row = math.floor(vim.o.lines - height - 2) -- Recalculate bottom row
+        win_opts.row = math.floor(vim.o.lines - height - 2)
         vim.api.nvim_win_set_config(win, win_opts)
       end
     end,
