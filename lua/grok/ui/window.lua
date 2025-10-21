@@ -76,9 +76,13 @@ local function close_chat_window()
   if ui.current_win and vim.api.nvim_win_is_valid(ui.current_win) then
     vim.api.nvim_win_close(ui.current_win, true)
   end
+  if ui.current_buf and vim.api.nvim_buf_is_valid(ui.current_buf) then
+    vim.api.nvim_buf_delete(ui.current_buf, { force = true })
+  end
   ui.current_buf = nil
   ui.current_win = nil
   ui.current_callback = nil
+  vim.api.nvim_command("redraw!")
 end
 
 return { open_chat_window = open_chat_window, close_chat_window = close_chat_window }

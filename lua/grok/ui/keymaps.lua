@@ -51,14 +51,8 @@ local function set_keymaps(buf, win, callback)
   })
   vim.api.nvim_buf_set_keymap(buf, "n", "<Esc>", "", {
     callback = function()
-      log.debug("Esc pressed in normal mode, focusing previous window")
-      local wins = vim.api.nvim_list_wins()
-      for _, w in ipairs(wins) do
-        if w ~= ui.current_win and vim.api.nvim_win_is_valid(w) then
-          vim.api.nvim_set_current_win(w)
-          break
-        end
-      end
+      log.debug("Esc pressed in normal mode, closing chat window")
+      require("grok.ui").close_chat_window()
     end,
     noremap = true,
     silent = true,

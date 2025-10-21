@@ -49,6 +49,23 @@ function M.setup(opts)
   M.chat = chat.chat
   commands.setup_commands()
   log.info("Plugin setup completed - grok-nvim v0.1.1")
+
+  -- Autocmd to clean up Grok UI on Neovim exit
+  vim.api.nvim_create_autocmd("VimLeavePre", {
+    callback = function()
+      local ui = require("grok.ui")
+      if ui.current_win and vim.api.nvim_win_is_valid(ui.current_win) then
+        require("grok.ui").close_chat_window()
+      end
+      -- Cleanup any lingering input buffers
+      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_get_option(buf, "buftype") == "prompt" then
+          vim.api.nvim_buf_delete(buf, { force = true })
+        end
+      end
+    end,
+    desc = "Clean up Grok UI before exiting Neovim",
+  })
 end
 
 return M

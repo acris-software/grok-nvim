@@ -1,6 +1,4 @@
 -- ~/github.com/acris-software/grok-nvim/lua/grok/chat/history.lua
-
--- ~/github.com/acris-software/grok-nvim/lua/grok/chat/history.lua
 local M = {}
 
 local history_file = vim.fn.stdpath("data") .. "/grok_chat_history.json"
