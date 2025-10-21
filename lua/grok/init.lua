@@ -3,6 +3,7 @@
 local M = {}
 local commands = require("grok.commands")
 local log = require("grok.log")
+
 function M.setup(opts)
   local curl = require("plenary.curl")
   local async = require("plenary.async")
@@ -36,13 +37,37 @@ function M.setup(opts)
     temperature = 0.7,
     max_tokens = 256,
     debug = false,
+    prompt_position = "center", -- Options: "left", "center", "right"
   }, opts or {})
   if not M.config.api_key then
     vim.notify("GROK_KEY not set in ~/.secrets, environment, or opts!", vim.log.levels.ERROR)
     log.error("API key not set in setup")
   end
+  require("grok.util").validate_config(M.config)
   M.chat = chat.chat
   commands.setup_commands()
-  log.info("Plugin setup completed")
+  log.info("Plugin setup completed - grok-nvim v0.1.1")
+
+  -- Clean up Grok UI and buffers on Neovim exit
+  vim.api.nvim_create_autocmd("VimLeavePre", {
+    callback = function()
+      local ui = require("grok.ui")
+      if ui.current_win and vim.api.nvim_win_is_valid(ui.current_win) then
+        require("grok.ui").close_chat_window()
+      end
+      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_valid(buf) then
+          local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
+          local filetype = vim.api.nvim_buf_get_option(buf, "filetype")
+          if buftype == "prompt" or filetype == "markdown" then
+            pcall(vim.api.nvim_buf_delete, buf, { force = true })
+          end
+        end
+      end
+      log.debug("Cleaned up Grok UI and buffers on VimLeavePre")
+    end,
+    desc = "Clean up Grok UI and buffers before exiting Neovim",
+  })
 end
+
 return M

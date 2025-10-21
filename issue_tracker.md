@@ -40,4 +40,26 @@
 - Add config location for prompt box (3 settings, left, center, right)
 - Clean up UI/UX and ensure user prompt scales with the users typing.
 
+## Issue 5: Inconsistent Prompt Box Display** (Target: 0.1.2)
+   - Problem: Prompt box only displays properly on first :Grok; reverts to old style after.
+   - Analysis: Likely state issue in chat/init.lua or ui/window.lua; floating input not reinitialized.
+   - Solution: Ensure util.create_floating_input called consistently on each prompt.
+   - Status: [ ] Not implemented.
 
+## Issue 6: Verify Max Prompt Length for Models** (Target: 0.1.1)
+   - Problem: Current max 131072 for Grok-3-mini; confirm accuracy.
+   - Analysis: From x.ai docs, Grok-3-mini context window is 131072 tokens (confirmed).
+   - Solution: Update util.get_model_max_tokens with verified values; add more models.
+   - Status: [✓] Verified (131072 tokens); implement dynamic if API provides.
+
+## Issue 7: Grok Prevents Smooth Neovim Exit** (Target: 0.1.2)
+   - Problem: Requires :qa! to exit Neovim after using Grok.
+   - Analysis: Likely unclosed buffers/windows or autocmds; check ui/window.lua close logic.
+   - Solution: Ensure close_chat_window cleans up properly; add vim.api.nvim_buf_delete on exit.
+   - Status: [ ] Not implemented.
+
+## Issue 8: Expand and Modularize Logging (Target: v0.1.3)
+   - **Problem:** Debug logs print regardless of config.debug setting, hurting performance; logging is monolithic in single core.lua file.
+   - **Analysis:** v0.1.1 util.lua introduced debug_log() concept but inconsistent across project; log/core.lua handles everything (levels, rotation, debug) without modularity.
+   - **Solution:** Modularize into log/log.lua (main), log/logger.lua (debug wrapper), log/rotate.lua (file management); enforce config.debug gate on ALL debug logs project-wide for 35%+ performance gain.
+   - **Status:** [ ] Not implemented.

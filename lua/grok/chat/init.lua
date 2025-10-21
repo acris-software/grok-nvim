@@ -1,10 +1,12 @@
 -- ~/github.com/acris-software/grok-nvim/lua/grok/chat/init.lua
 
 local M = {}
+
 local async = require("plenary.async")
 local ui = require("grok.ui")
 local log = require("grok.log")
 local request = require("grok.chat.request")
+local util = require("grok.util")
 
 function M.chat(prompt)
   local config = require("grok").config
@@ -36,6 +38,12 @@ function M.chat(prompt)
           log.error("Failed to append initial prompt: " .. vim.inspect(err))
         end
         request.send_request(prompt)
+      end)
+    else
+      -- Directly open the floating input instead of simulating 'i'
+      vim.schedule(function()
+        log.debug("Opening floating input with callback: " .. vim.inspect(ui.current_callback))
+        util.create_floating_input({ callback = ui.current_callback })
       end)
     end
   end)

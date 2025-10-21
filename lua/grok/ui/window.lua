@@ -2,7 +2,22 @@
 
 local function open_chat_window(callback)
   local log = require("grok.log")
-  log.info("Opening chat window")
+  local ui = require("grok.ui")
+
+  -- Return existing window if valid
+  if
+    ui.current_win
+    and vim.api.nvim_win_is_valid(ui.current_win)
+    and ui.current_buf
+    and vim.api.nvim_buf_is_valid(ui.current_buf)
+  then
+    vim.api.nvim_set_current_win(ui.current_win)
+    require("grok.ui.render").render_tab_content(ui.current_buf, callback)
+    log.debug("Reusing existing chat window: " .. ui.current_win)
+    return ui.current_buf, ui.current_win
+  end
+
+  log.info("Opening new chat window")
   local buf = vim.api.nvim_create_buf(false, true)
   local win = vim.api.nvim_open_win(buf, true, {
     relative = "editor",
@@ -27,23 +42,60 @@ local function open_chat_window(callback)
   end
   pcall(require("nvim-treesitter.highlight").attach, buf, "markdown")
   -- Set state
-  require("grok.ui").current_buf = buf
-  require("grok.ui").current_win = win
-  -- Render initial tab
+  ui.current_buf = buf
+  ui.current_win = win
+  ui.current_callback = callback
   require("grok.ui.render").render_tab_content(buf, callback)
-  -- Set keymaps
   require("grok.ui.keymaps").set_keymaps(buf, win, callback)
+  -- Autocmd for config tab real-time updates
+  vim.api.nvim_create_autocmd("BufLeave", {
+    buffer = buf,
+    callback = function()
+      if ui.current_tab == 3 then
+        log.info("Config tab changes applied")
+      end
+    end,
+  })
+  -- Clean up state on window close
+  vim.api.nvim_create_autocmd("WinClosed", {
+    pattern = tostring(win),
+    callback = function()
+      ui.current_buf = nil
+      ui.current_win = nil
+      ui.current_callback = nil
+      log.debug("Chat window closed, cleared UI state")
+    end,
+  })
   return buf, win
 end
 
 local function close_chat_window()
   local log = require("grok.log")
+  local ui = require("grok.ui")
   log.info("Closing chat window")
-  if require("grok.ui").current_win and vim.api.nvim_win_is_valid(require("grok.ui").current_win) then
-    vim.api.nvim_win_close(require("grok.ui").current_win, true)
+
+  -- Close the main chat window
+  if ui.current_win and vim.api.nvim_win_is_valid(ui.current_win) then
+    vim.api.nvim_win_close(ui.current_win, true)
   end
-  require("grok.ui").current_buf = nil
-  require("grok.ui").current_win = nil
+
+  -- Delete the main chat buffer
+  if ui.current_buf and vim.api.nvim_buf_is_valid(ui.current_buf) then
+    vim.api.nvim_buf_delete(ui.current_buf, { force = true })
+  end
+
+  -- Clean up any lingering prompt buffers
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_get_option(buf, "buftype") == "prompt" then
+      pcall(vim.api.nvim_buf_delete, buf, { force = true })
+    end
+  end
+
+  -- Reset UI state
+  ui.current_buf = nil
+  ui.current_win = nil
+  ui.current_callback = nil
+  vim.api.nvim_command("redraw!")
 end
 
 return { open_chat_window = open_chat_window, close_chat_window = close_chat_window }
