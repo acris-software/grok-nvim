@@ -73,12 +73,25 @@ local function close_chat_window()
   local log = require("grok.log")
   local ui = require("grok.ui")
   log.info("Closing chat window")
+
+  -- Close the main chat window
   if ui.current_win and vim.api.nvim_win_is_valid(ui.current_win) then
     vim.api.nvim_win_close(ui.current_win, true)
   end
+
+  -- Delete the main chat buffer
   if ui.current_buf and vim.api.nvim_buf_is_valid(ui.current_buf) then
     vim.api.nvim_buf_delete(ui.current_buf, { force = true })
   end
+
+  -- Clean up any lingering prompt buffers
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_get_option(buf, "buftype") == "prompt" then
+      pcall(vim.api.nvim_buf_delete, buf, { force = true })
+    end
+  end
+
+  -- Reset UI state
   ui.current_buf = nil
   ui.current_win = nil
   ui.current_callback = nil

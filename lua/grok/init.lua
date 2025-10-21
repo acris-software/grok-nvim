@@ -37,9 +37,7 @@ function M.setup(opts)
     temperature = 0.7,
     max_tokens = 256,
     debug = false,
-    -- v0.1.1 Additions: UI Polish
     prompt_position = "center", -- Options: "left", "center", "right"
-    -- Hidden: max_prompt_length derived from model (not user-settable)
   }, opts or {})
   if not M.config.api_key then
     vim.notify("GROK_KEY not set in ~/.secrets, environment, or opts!", vim.log.levels.ERROR)
@@ -50,21 +48,25 @@ function M.setup(opts)
   commands.setup_commands()
   log.info("Plugin setup completed - grok-nvim v0.1.1")
 
-  -- Autocmd to clean up Grok UI on Neovim exit
+  -- Clean up Grok UI and buffers on Neovim exit
   vim.api.nvim_create_autocmd("VimLeavePre", {
     callback = function()
       local ui = require("grok.ui")
       if ui.current_win and vim.api.nvim_win_is_valid(ui.current_win) then
         require("grok.ui").close_chat_window()
       end
-      -- Cleanup any lingering input buffers
       for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.api.nvim_buf_get_option(buf, "buftype") == "prompt" then
-          vim.api.nvim_buf_delete(buf, { force = true })
+        if vim.api.nvim_buf_is_valid(buf) then
+          local buftype = vim.api.nvim_buf_get_option(buf, "buftype")
+          local filetype = vim.api.nvim_buf_get_option(buf, "filetype")
+          if buftype == "prompt" or filetype == "markdown" then
+            pcall(vim.api.nvim_buf_delete, buf, { force = true })
+          end
         end
       end
+      log.debug("Cleaned up Grok UI and buffers on VimLeavePre")
     end,
-    desc = "Clean up Grok UI before exiting Neovim",
+    desc = "Clean up Grok UI and buffers before exiting Neovim",
   })
 end
 

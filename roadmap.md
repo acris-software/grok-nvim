@@ -164,18 +164,18 @@ UI Polish - Centered Input + Multi-line Prompts + Auto-scrolling.
      - Max length: config.max_prompt_length = 2048 (model-aware defaults)
    - Dependencies: Existing ui/window.lua for floating window patterns.
    - Test Plan:
-     - [ ] Input appears centered, scales to 3+ lines
-     - [ ] Config tab changes position instantly  
-     - [ ] Multi-line input submits correctly
-     - [ ] Auto-scrolls to bottom on responses
-     - [ ] Respects max length per model
+     - [✓] Input appears centered, scales to 3+ lines
+     - [✓] Config tab changes position instantly  
+     - [✓] Multi-line input submits correctly
+     - [✓] Auto-scrolls to bottom on responses
+     - [ ] Respects max length per model <-- incorrect. we track max chars, not max tokens
 
 **UI Auto-scrolling Enhancement** (Target: 0.1.1)
    - Description: Automatically scroll to bottom on new messages.
    - Implementation Notes:
      - In `ui/render.lua.append_response`: Always set cursor to {line_count, 0}
      - In `ui/render.lua.render_tab_content`: Set cursor to bottom for tab 1
-   - Status: [ ] Not implemented.
+   - Status: [✓] Implemented, need to test.
    - Dependencies: Existing cursor positioning code.
 
 **Multi-line Input Support** (Target: 0.1.1)
@@ -184,7 +184,7 @@ UI Polish - Centered Input + Multi-line Prompts + Auto-scrolling.
      - Create dedicated input buffer/window in `chat/init.lua`
      - Keymaps: <CR> = submit, <Esc> = cancel, <C-u> = clear
      - Auto-grow height from 3 to 8 lines based on content
-   - Status: [ ] Not implemented.
+   - Status: [✓] Implemented. Need to test.
    - Dependencies: ui/window.lua patterns.
 
 **Issue 5: Inconsistent Prompt Box Display** (Target: 0.1.1)
@@ -203,7 +203,7 @@ UI Polish - Centered Input + Multi-line Prompts + Auto-scrolling.
    - Problem: Requires :qa! to exit Neovim after using Grok.
    - Analysis: Likely unclosed buffers/windows or autocmds; check ui/window.lua close logic.
    - Solution: Ensure close_chat_window cleans up properly; add vim.api.nvim_buf_delete on exit.
-   - Status: [✓] Verified fixed.
+   - Status: [ ] Further testing required.
 
 #### v0.1.2
 **Config expansions**
