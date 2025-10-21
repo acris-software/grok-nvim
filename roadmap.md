@@ -152,7 +152,7 @@ UI Polish - Centered Input + Multi-line Prompts + Auto-scrolling.
    - Problem: User chat box input pops up in weird space, cutting off text.
    - Analysis: UI/UX needs improvement; prompt should scale with typing; be configurable.
    - Solution: Add config.prompt_position (left/center/right); real-time updates via config tab.
-   - Status: [ ] Not implemented.
+   - Status: [✓] Implemented.
    - Implementation Notes:
      - In `init.lua`: Add `prompt_position = "center"` (options: "left", "center", "right")
      - In `chat/init.lua`: Replace vim.ui.input with floating window using vim.api.nvim_open_win
@@ -187,16 +187,36 @@ UI Polish - Centered Input + Multi-line Prompts + Auto-scrolling.
    - Status: [ ] Not implemented.
    - Dependencies: ui/window.lua patterns.
 
-**Config Tab Real-time Updates** (Target: 0.1.1)
-   - Description: Changes in config tab apply instantly without restart.
-   - Implementation Notes:
-     - Use vim.api.nvim_create_autocmd("BufLeave", {pattern = "*grok-config*", callback = apply_config})
-     - Reload relevant options: prompt_position, theme, keymaps
-     - User defined basic config in their ~/.config/nvim/lua/grok.lua must not be changed automatically.
-   - Status: [ ] Not implemented.
-   - Dependencies: Existing config display in tab 3.
+**Issue 5: Inconsistent Prompt Box Display** (Target: 0.1.1)
+   - Problem: Prompt box only displays properly on first :Grok; reverts to old style after.
+   - Analysis: Likely state issue in chat/init.lua or ui/window.lua; floating input not reinitialized.
+   - Solution: Ensure util.create_floating_input called consistently on each prompt.
+   - Status: [✓] Verified fixed.
 
-**Improved Error Handling for UI** (Target: 0.1.1)
+**Issue 6: Verify Max Prompt Length for Models** (Target: 0.1.1)
+   - Problem: Current max 131072 for Grok-3-mini; confirm accuracy.
+   - Analysis: From x.ai docs, Grok-3-mini context window is 131072 tokens (confirmed).
+   - Solution: Update util.get_model_max_tokens with verified values; add more models.
+   - Status: [✓] Verified (131072 tokens); implement dynamic if API provides.
+
+**Issue 7: Grok Prevents Smooth Neovim Exit** (Target: 0.1.1)
+   - Problem: Requires :qa! to exit Neovim after using Grok.
+   - Analysis: Likely unclosed buffers/windows or autocmds; check ui/window.lua close logic.
+   - Solution: Ensure close_chat_window cleans up properly; add vim.api.nvim_buf_delete on exit.
+   - Status: [✓] Verified fixed.
+
+#### v0.1.2
+**Config expansions**
+**Flexible Configuration System** (Target: 0.1.2)
+   - Description: Expand `setup(opts)` to support more overrides; add validation.
+   - Implementation Notes:
+     - In `init.lua`: Add `stream` (bool, default true) to toggle streaming; use pcall/type checks for validation (e.g., if model not string, notify and default).
+     - Support model aliases by adding a table in config (e.g., if opts.model = "mini", map to "grok-3-mini"; error on invalid alias).
+     - How to Achieve: Extend `tbl_deep_extend` with post-processing for aliases/validation; test with invalid opts to ensure notifications.
+   - Dependencies: None.
+   - Status: [✓] Basic config exists; [✓] Loads API key from file/env; [ ] Add stream/aliases/validation.
+
+**Improved Error Handling for UI** (Target: 0.1.2)
    - Description: Enhance error feedback in UI elements like input prompts and config tab.
    - Implementation Notes:
      - In `chat/init.lua` and `ui/render.lua`: Add try-catch (pcall) around UI operations; display vim.notify on failures.
@@ -205,7 +225,16 @@ UI Polish - Centered Input + Multi-line Prompts + Auto-scrolling.
    - Status: [ ] Not implemented.
    - Dependencies: Existing log.lua and error handling in core.
 
-**User Config Separation & Hidden Options** (Target: 0.1.1)
+**Config Tab Real-time Updates** (Target: 0.1.2)
+   - Description: Changes in config tab apply instantly without restart.
+   - Implementation Notes:
+     - Use vim.api.nvim_create_autocmd("BufLeave", {pattern = "*grok-config*", callback = apply_config})
+     - Reload relevant options: prompt_position, theme, keymaps
+     - User defined basic config in their ~/.config/nvim/lua/grok.lua must not be changed automatically.
+   - Status: [ ] Not implemented.
+   - Dependencies: Existing config display in tab 3.
+
+**User Config Separation & Hidden Options** (Target: 0.1.2)
    - Description: Distinguish user-defined grok.lua basics from in-plugin configs; define visible/hidden options.
    - Implementation Notes:
      - In `init.lua`: Load basics (api_key, model, etc.) from user grok.lua; prevent overwrites.
@@ -215,52 +244,6 @@ UI Polish - Centered Input + Multi-line Prompts + Auto-scrolling.
    - Status: [ ] Not implemented.
    - Dependencies: Flexible Config System (partial from v0.1.2).
 
-**Log Directory Expansion** (Target: 0.1.2)
-   - Description: Modularize log/ if needed for UI error handling.
-   - Implementation Notes:
-     - Split core.lua into log/levels.lua (debug/info/error), log/rotate.lua (size management).
-     - Keep minimal: Only expand if UI errors require more granular logging.
-   - Status: [ ] Not implemented (defer if not critical).
-   - Dependencies: Existing log.lua.
-
-**util.lua Expansion for UI Helpers** (Target: 0.1.1)
-   - Description: Add utility functions for new UI features.
-   - Implementation Notes:
-     - util.get_model_max_tokens(model): Return max context (e.g., 131072 for Grok-3-mini from API docs).
-     - util.validate_config(opts): Type checks + notifications.
-     - util.auto_scroll(buf, win): Set cursor to bottom.
-     - util.create_floating_input(opts): Helper to open resizable input window.
-   - Status: [ ] Not implemented.
-   - Dependencies: None.
-
-**Issue 5: Inconsistent Prompt Box Display** (Target: 0.1.2)
-   - Problem: Prompt box only displays properly on first :Grok; reverts to old style after.
-   - Analysis: Likely state issue in chat/init.lua or ui/window.lua; floating input not reinitialized.
-   - Solution: Ensure util.create_floating_input called consistently on each prompt.
-   - Status: [ ] Not implemented.
-
-**Issue 6: Verify Max Prompt Length for Models** (Target: 0.1.1)
-   - Problem: Current max 131072 for Grok-3-mini; confirm accuracy.
-   - Analysis: From x.ai docs, Grok-3-mini context window is 131072 tokens (confirmed).
-   - Solution: Update util.get_model_max_tokens with verified values; add more models.
-   - Status: [✓] Verified (131072 tokens); implement dynamic if API provides.
-
-**Issue 7: Grok Prevents Smooth Neovim Exit** (Target: 0.1.2)
-   - Problem: Requires :qa! to exit Neovim after using Grok.
-   - Analysis: Likely unclosed buffers/windows or autocmds; check ui/window.lua close logic.
-   - Solution: Ensure close_chat_window cleans up properly; add vim.api.nvim_buf_delete on exit.
-   - Status: [ ] Not implemented.
-
-i#### v0.1.2
-Config expansions.
-**Flexible Configuration System** (Target: 0.1.2)
-   - Description: Expand `setup(opts)` to support more overrides; add validation.
-   - Implementation Notes:
-     - In `init.lua`: Add `stream` (bool, default true) to toggle streaming; use pcall/type checks for validation (e.g., if model not string, notify and default).
-     - Support model aliases by adding a table in config (e.g., if opts.model = "mini", map to "grok-3-mini"; error on invalid alias).
-     - How to Achieve: Extend `tbl_deep_extend` with post-processing for aliases/validation; test with invalid opts to ensure notifications.
-   - Dependencies: None.
-   - Status: [✓] Basic config exists; [✓] Loads API key from file/env; [ ] Add stream/aliases/validation.
 
 #### v0.1.3
 **Enhanced Logging System + Performance + Debug Flag**
@@ -281,6 +264,22 @@ Config expansions.
      - How to Achieve: Add a retry function around curl; test with mocked errors (plenary.test for unit tests).
    - Dependencies: New modular log/ directory structure.
    - Status: [✓] Basic errors handled; [ ] **FULL LOGGING + RETRIES + PERFORMANCE**.
+
+**Log Directory Expansion** (Target: 0.1.3)
+   - Description: Modularize log/ if needed for UI error handling.
+   - Implementation Notes:
+     - Split core.lua into log/levels.lua (debug/info/error), log/rotate.lua (size management).
+     - Keep minimal: Only expand if UI errors require more granular logging.
+   - Status: [ ] Not implemented (defer if not critical).
+   - Dependencies: Existing log.lua.
+
+**Log Directory Expansion** (Target: 0.1.3)
+   - Description: Modularize log/ if needed for UI error handling.
+   - Implementation Notes:
+     - Split core.lua into log/levels.lua (debug/info/error), log/rotate.lua (size management).
+     - Keep minimal: Only expand if UI errors require more granular logging.
+   - Status: [ ] Not implemented (defer if not critical).
+   - Dependencies: Existing log.lua.
 
 #### v0.1.4
 Model presets.
