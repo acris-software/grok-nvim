@@ -60,17 +60,8 @@ function M.create_floating_input(opts)
   local buf = vim.api.nvim_create_buf(false, true)
   local width = math.floor(vim.o.columns * 0.6)
   local height = 3
-  local row, col
-  if config.prompt_position == "left" then
-    row = math.floor(vim.o.lines * 0.1)
-    col = math.floor(vim.o.columns * 0.1)
-  elseif config.prompt_position == "right" then
-    row = math.floor(vim.o.lines * 0.1)
-    col = math.floor(vim.o.columns * 0.9 - width)
-  else -- center
-    row = math.floor((vim.o.lines - height) / 2)
-    col = math.floor((vim.o.columns - width) / 2)
-  end
+  local row = math.floor(vim.o.lines - height - 2) -- Bottom-aligned, 2 lines from edge
+  local col = math.floor((vim.o.columns - width) / 2) -- Centered horizontally
   local win_opts = {
     relative = "editor",
     width = width,
@@ -84,22 +75,18 @@ function M.create_floating_input(opts)
   local win = vim.api.nvim_open_win(buf, true, win_opts)
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
   vim.api.nvim_buf_set_option(buf, "buftype", "prompt")
-  -- Clear any existing text
   vim.fn.prompt_setprompt(buf, "")
   log.debug("Prompt set to empty string")
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
-  -- Store callback in buffer variable
   if opts.callback then
     vim.api.nvim_buf_set_var(buf, "grok_callback", opts.callback)
   end
-  -- Char counter autocmd with window validity check
   local char_count = 0
   local autocmd_id = vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
     buffer = buf,
     callback = function()
-      -- Check if window is still valid
       if not vim.api.nvim_win_is_valid(win) then
-        return true -- Returning true removes the autocmd
+        return true
       end
       local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
       char_count = #text
@@ -113,21 +100,17 @@ function M.create_floating_input(opts)
       if new_height ~= height then
         height = new_height
         win_opts.height = height
-        if config.prompt_position == "center" then
-          win_opts.row = math.floor((vim.o.lines - height) / 2)
-        end
+        win_opts.row = math.floor(vim.o.lines - height - 2) -- Recalculate bottom row
         vim.api.nvim_win_set_config(win, win_opts)
       end
     end,
   })
-  -- Clean up autocmd when buffer is deleted
   vim.api.nvim_create_autocmd("BufWipeout", {
     buffer = buf,
     callback = function()
       vim.api.nvim_del_autocmd(autocmd_id)
     end,
   })
-  -- Keymaps for input
   vim.api.nvim_buf_set_keymap(
     buf,
     "i",
@@ -149,10 +132,18 @@ function M.create_floating_input(opts)
     "<cmd>lua vim.api.nvim_buf_set_lines(0, 0, -1, false, {})<CR>",
     { noremap = true, silent = true }
   )
-  -- Explicitly enter insert mode cleanly
   vim.api.nvim_command("startinsert")
 end
 
+function M.submit_input()
+  local buf = vim.api.nvim_get_current_buf()
+  local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
+  local ok, callback = pcall(vim.api.nvim_buf_get_var, buf, "grok_callback")
+  vim.api.nvim_win_close(0, true)
+  if ok and callback then
+    callback(text)
+  end
+end
 function M.submit_input()
   local buf = vim.api.nvim_get_current_buf()
   local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
