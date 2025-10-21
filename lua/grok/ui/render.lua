@@ -53,6 +53,8 @@ local function render_tab_content(buf, callback)
       require("grok.util").auto_scroll(buf, require("grok.ui").current_win) -- v0.1.1 Auto-scroll
     end
     render_tab_header(buf) -- Refresh header
+    -- Apply header highlight
+    vim.api.nvim_buf_add_highlight(buf, require("grok.ui").ns, "GrokHeader", 0, 0, -1)
     vim.api.nvim_buf_set_option(buf, "modifiable", false)
   else
     local content_lines = {}
@@ -78,7 +80,8 @@ local function render_tab_content(buf, callback)
       }
     end
     vim.api.nvim_buf_set_lines(buf, 1, -1, false, content_lines)
-    render_tab_header(buf) -- Refresh header before locking
+    render_tab_header(buf) -- Refresh header
+    vim.api.nvim_buf_add_highlight(buf, require("grok.ui").ns, "GrokHeader", 0, 0, -1)
     vim.api.nvim_buf_set_option(buf, "modifiable", false) -- Lock non-chat tabs
   end
 end

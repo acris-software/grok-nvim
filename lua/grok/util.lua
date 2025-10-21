@@ -69,7 +69,16 @@ function M.create_floating_input(opts)
     row = row,
     col = col,
     style = "minimal",
-    border = "rounded",
+    border = {
+      { "┌", "GrokUser" },
+      { "─", "GrokUser" },
+      { "┐", "GrokUser" },
+      { "│", "GrokUser" },
+      { "┘", "GrokUser" },
+      { "─", "GrokUser" },
+      { "└", "GrokUser" },
+      { "│", "GrokUser" },
+    }, -- Thin near-white border
     title = "Enter Query (0/" .. max_length .. ")",
   }
   local win = vim.api.nvim_open_win(buf, true, win_opts)
@@ -135,15 +144,6 @@ function M.create_floating_input(opts)
   vim.api.nvim_command("startinsert")
 end
 
-function M.submit_input()
-  local buf = vim.api.nvim_get_current_buf()
-  local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
-  local ok, callback = pcall(vim.api.nvim_buf_get_var, buf, "grok_callback")
-  vim.api.nvim_win_close(0, true)
-  if ok and callback then
-    callback(text)
-  end
-end
 function M.submit_input()
   local buf = vim.api.nvim_get_current_buf()
   local text = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")

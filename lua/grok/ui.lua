@@ -14,10 +14,11 @@ M.tabs = { "1: Grok", "2: Keymaps", "3: Config" }
 local ui_state = require("grok.ui.state")
 M.current_tab = ui_state.state.current_tab
 
--- Fixed highlights for v0.1.1 polish
+-- Fixed highlights for v0.1.1 polish (Grok UI-inspired)
+vim.api.nvim_set_hl(0, "GrokChatWindow", { bg = "#000000" }) -- Solid black for entire chat
+vim.api.nvim_set_hl(0, "GrokAssistant", { bg = "#000000", fg = "#ffffff" }) -- Black bg, white fg for Grok
 vim.api.nvim_set_hl(0, "GrokUser", { bg = "#333333", fg = "#ffffff" }) -- Charcoal gray bg, white fg for user
-vim.api.nvim_set_hl(0, "GrokAssistant", { bg = "#1a1a1a", fg = "#ffffff" }) -- Dark black bg, white fg for Grok
-vim.api.nvim_set_hl(0, "GrokChatWindow", { bg = "#2d2d2d" }) -- Neutral chat window bg (dark grey)
+vim.api.nvim_set_hl(0, "GrokHeader", { bg = "#666666", fg = "#ffffff" }) -- Lighter gray for header
 
 M.open_chat_window = require("grok.ui.window").open_chat_window
 M.append_response = require("grok.ui.render").append_response
