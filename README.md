@@ -3,6 +3,7 @@
 <a href="https://dotfyle.com/acris-software/grok-nvim-lua-grok"><img src="https://dotfyle.com/acris-software/grok-nvim-lua-grok/badges/leaderkey?style=for-the-badge" /></a>
 <a href="https://dotfyle.com/acris-software/grok-nvim-lua-grok"><img src="https://dotfyle.com/acris-software/grok-nvim-lua-grok/badges/plugin-manager?style=for-the-badge" /></a>
 ![grok-nvim](https://github.com/acris-software/grok-nvim/blob/dev/assets/images/grok-nvim.jpg)
+![Star History Chart](https://api.star-history.com/svg?repos=acris-software/grok-nvim&type=Date)
 
 ## Project Overview
 `grok-nvim` is a lightweight Neovim plugin for interacting with xAI's Grok models via their API. It provides a floating chat window for querying Grok, supports streaming responses, and offers a plug-and-play experience. Users install via a plugin manager, configure their xAI API key, and customize settings through `require("grok").setup(opts)`. Designed for developers, it enables seamless code analysis and interactive AI conversations within Neovim.
