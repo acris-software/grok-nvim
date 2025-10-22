@@ -5,29 +5,27 @@
 ![grok-nvim](https://github.com/acris-software/grok-nvim/blob/dev/assets/images/grok-nvim.jpg)
 
 ## Project Overview
-grok-nvim is a Neovim plugin for interacting with xAI's Grok models via their API. It provides a floating chat window for queries, supports streaming responses, and aims for a plug-and-play experience. Users install via a plugin manager, set their API key, and customize via `require("grok").setup(opts)`.
+`grok-nvim` is a lightweight Neovim plugin for interacting with xAI's Grok models via their API. It provides a floating chat window for querying Grok, supports streaming responses, and offers a plug-and-play experience. Users install via a plugin manager, configure their xAI API key, and customize settings through `require("grok").setup(opts)`. Designed for developers, it enables seamless code analysis and interactive AI conversations within Neovim.
 
 **Goals**:
-- **Clean**: Minimalist code (<500 LOC total), modular files.
-- **Simple**: Easy setup; intuitive commands/keymaps.
-- **Performant**: Async operations; lightweight (only plenary.nvim dep for curl/async).
-- **Plug-and-Play**: Override model/tokens/temperature in setup; no code changes needed.
+- **Clean**: Modular, lightweight design with minimal dependencies.
+- **Simple**: Intuitive setup and commands/keymaps for ease of use.
+- **Performant**: Async operations for fast, non-blocking interactions.
+- **Plug-and-Play**: Flexible configuration for model, temperature, and max tokens without code changes.
 
-**Dependencies**: plenary.nvim (for curl, async).
+**Dependencies**: `plenary.nvim` (for curl and async operations).
 
 ## Features
-
-- **Interactive Chat**: Use `:Grok <prompt>` or `<leader>gg` to query Grok (e.g., "Explain this Lua code"). (Note: Commands and keymaps must be defined in your Neovim config.)
-- **Code Analysis**: Select code in visual mode and press `<leader>gg` to explain or refactor. (Note: Keymaps must be defined in your Neovim config.)
-- **Configurable**: Supports `grok-beta` or `grok-4`, customizable temperature and max tokens.
-- **Lightweight**: Built with `plenary.nvim` for HTTP requests, no heavy dependencies.
+- **Interactive Chat**: Use `:Grok <prompt>` or `<leader>gg` to query Grok (e.g., "Explain this Lua code"). Requires user-defined commands/keymaps in Neovim config.
+- **Code Analysis**: Select code in visual mode and press `<leader>gg` to explain or refactor code. Requires user-defined keymaps.
+- **Configurable**: Supports models (`grok-beta`, `grok-4`, `grok-3-mini`), customizable temperature, and max tokens.
+- **Streaming Responses**: Real-time response rendering in the floating window.
+- **Lightweight**: Minimal footprint with only `plenary.nvim` as a dependency.
 
 ## Installation
+Obtain an xAI API key from [x.ai/api](https://x.ai/api). For free testing, use the Grok interface on [grok.com](https://grok.com) or [x.com](https://x.com).
 
-Obtain an xAI API key from x.ai/api. For free testing, use the Grok interface on grok.com or x.com before integrating with the API.
-
-### With lazy.nvim (General)
-
+### With lazy.nvim
 Add to your Neovim plugin manager (e.g., in `lua/plugins.lua`):
 
 ```lua
@@ -35,14 +33,12 @@ return {
   {
     "acris-software/grok-nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
-    branch = "master",
     config = function()
       require("grok").setup({
         model = "grok-3-mini",
         base_url = "https://api.x.ai/v1",
         temperature = 0.7,
         max_tokens = 256,
-        debug = false, -- Set true for debug mode
       })
     end,
   },
@@ -51,26 +47,46 @@ return {
 
 ## Usage
 
-Chat: **`:Grok`** "Explain my Hyprland config" or <leader>gg to open a floating chat window.
-Code Analysis: In visual mode, select code and press <leader>gg to get explanations.
-Customize: Adjust model, temperature, or max_tokens in the setup function.
+- Chat: **`:Grok`** "What is the meaning of life?" or <leader>gg to open a floating chat window.
+- Code Analysis: In visual mode, select code and press <leader>gg or **`:GrokExplain`** to get explanations.
+- Customize: Adjust `model`, `temperature`, or `max_tokens` in `setup()`.
 
 Requirements
 
-Neovim 0.9.0+
-plenary.nvim
-xAI API key (free or paid tier, see x.ai/api)
+- Neovim 0.9.0+
+- plenary.nvim
+- xAI API key (free or paid tier, see x.ai/api)
 
 Project Structure
 ```
 grok-nvim/
+├── assets/
+│   ├── images/
+│   │   └── grok-nvim.jpg
+├── documenation/
+│   ├── issue_tracker.md
+│   └── roadmap.md
 ├── lua/
-│   ├── grok/
-│   │   ├── init.lua
-│   │   ├── ui.lua
-├── README.md
+│   └──── grok/
+│       ├── chat/
+│       ├── history.lua  # Manages prompt history
+│       │   ├── init.lua    # Chat module initialization
+│       │   └── request.lua # Handles API requests
+│       ├── log/
+│       │   └── core.lua    # Logging utilities
+│       ├── ui/
+│       │   ├── keymaps.lua # Keymap definitions
+│       │   ├── render.lua  # UI rendering logic
+│       │   ├── state.lua   # UI state management
+│       │   └── window.lua  # Floating window handling
+│       ├── commands.lua    # Command definitions
+│       ├── init.lua        # Plugin entry point
+│       ├── log.lua         # Logging interface
+│       ├── ui.lua          # UI module entry point
+│       └── util.lua        # General utilities
 ├── .gitignore
 ├── LICENSE
+└── README.md
 ```
 
 ## License
